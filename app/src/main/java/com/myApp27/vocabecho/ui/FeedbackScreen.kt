@@ -82,13 +82,12 @@ fun FeedbackScreen(
 
     val todayTotal = (dueToday + newCount).coerceAtLeast(1)
 
-    // (приблизительно) "сделано сегодня" = сколько оценок уже есть + 1 текущая, но не больше todayTotal
-    // Это не идеальный "done", но будет выглядеть адекватно и НЕ будет показывать total колоды.
+    // "сделано сегодня" = количество карточек, повторённых сегодня (по lastReviewedEpochDay)
     var learnedCount by remember { mutableStateOf(0) }
     LaunchedEffect(deckId) {
-        learnedCount = progressRepo.getAllForDeck(deckId).size
+        learnedCount = progressRepo.countReviewedToday(deckId)
     }
-    val done = (learnedCount + 1).coerceAtMost(todayTotal)
+    val done = learnedCount.coerceAtMost(todayTotal)
 
     val correct = card.back
     val isCorrect = AnswerNormalizer.isCorrect(userAnswer, correct)

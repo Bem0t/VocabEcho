@@ -25,4 +25,8 @@ interface CardProgressDao {
     // Прогресс всех карточек колоды (чтобы понимать, какие NEW)
     @Query("SELECT * FROM card_progress WHERE deckId = :deckId")
     suspend fun getAllForDeck(deckId: String): List<CardProgressEntity>
+
+    // Количество карточек, повторённых сегодня
+    @Query("SELECT COUNT(*) FROM card_progress WHERE deckId = :deckId AND lastReviewedEpochDay = :todayEpochDay")
+    suspend fun countReviewedToday(deckId: String, todayEpochDay: Long): Int
 }
