@@ -10,6 +10,7 @@ import com.myApp27.vocabecho.ui.DecksScreen
 import com.myApp27.vocabecho.ui.FeedbackScreen
 import com.myApp27.vocabecho.ui.LearnScreen
 import com.myApp27.vocabecho.ui.ParentSettingsScreen
+import com.myApp27.vocabecho.ui.parent.AddDeckScreen
 
 @Composable
 fun AppNavHost() {
@@ -43,7 +44,8 @@ fun AppNavHost() {
                 deckId = deckId,
                 onChecked = { cardId, answer ->
                     navController.navigate(Routes.feedback(deckId, cardId, answer))
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -70,13 +72,27 @@ fun AppNavHost() {
                         popUpTo(Routes.learn(deckId)) { inclusive = true }
                         launchSingleTop = true
                     }
+                },
+                onBack = {
+                    // Return to decks screen
+                    navController.popBackStack(Routes.DECKS, inclusive = false)
                 }
             )
         }
 
         // 4) Родительские настройки
         composable(Routes.PARENT) {
-            ParentSettingsScreen(onBack = { navController.popBackStack() })
+            ParentSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onAddDeckClick = { navController.navigate(Routes.ADD_DECK) }
+            )
+        }
+
+        // 5) Добавление колоды
+        composable(Routes.ADD_DECK) {
+            AddDeckScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

@@ -24,11 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.data.CombinedDeckRepository
 import com.myApp27.vocabecho.data.DeckRepository
+import com.myApp27.vocabecho.data.UserDeckRepository
 import com.myApp27.vocabecho.data.db.DatabaseProvider
 import com.myApp27.vocabecho.data.progress.ProgressRepository
 import com.myApp27.vocabecho.data.settings.ParentSettingsRepository
 import com.myApp27.vocabecho.domain.answer.AnswerNormalizer
+import com.myApp27.vocabecho.domain.model.Deck
 import com.myApp27.vocabecho.domain.model.ParentSettings
 import com.myApp27.vocabecho.domain.time.TimeProvider
 import kotlinx.coroutines.launch
@@ -38,46 +41,58 @@ fun FeedbackScreen(
     deckId: String,
     cardId: String,
     userAnswer: String,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
-    val deckRepo = remember { DeckRepository(context) }
     val db = remember { DatabaseProvider.get(context) }
+    val assetRepo = remember { DeckRepository(context) }
+    val userRepo = remember { UserDeckRepository(db.userDeckDao(), db.userCardDao()) }
+    val deckRepo = remember { CombinedDeckRepository(assetRepo, userRepo) }
     val progressRepo = remember { ProgressRepository(db.cardProgressDao(), db.cardStatsDao()) }
     val settingsRepo = remember { ParentSettingsRepository(context) }
 
     val settings by settingsRepo.settingsFlow.collectAsState(initial = ParentSettings())
     val scope = rememberCoroutineScope()
 
-    val deck = remember(deckId) { deckRepo.loadDeck(deckId) }
+    // Load deck asynchronously since CombinedDeckRepository is suspend
+    var deck by remember { mutableStateOf<Deck?>(null) }
+    var dueToday by remember { mutableStateOf(0) }
+    var newCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(deckId) {
+        val loadedDeck = deckRepo.loadDeck(deckId)
+        deck = loadedDeck
+
+        if (loadedDeck != null) {
+            val today = TimeProvider.todayEpochDay()
+            val progress = progressRepo.getAllForDeck(deckId)
+            val byId = progress.associateBy { it.cardId }
+
+            dueToday = loadedDeck.cards.count { c ->
+                val p = byId[c.id]
+                p != null && p.dueEpochDay <= today
+            }
+
+            newCount = loadedDeck.cards.count { c ->
+                byId[c.id] == null
+            }
+        }
+    }
+
     val card = remember(deck, cardId) { deck?.cards?.firstOrNull { it.id == cardId } }
 
     if (deck == null || card == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Ошибка: данные не найдены")
+            Text("Загрузка...")
         }
         return
     }
 
-    // ✅ Счётчик должен быть как на Learn: сколько слов "на сегодня", а не всего в колоде.
-    // Берём из прогресса и dueEpochDay.
-    var dueToday by remember { mutableStateOf(0) }
-    var newCount by remember { mutableStateOf(0) }
-    LaunchedEffect(deckId) {
-        val today = TimeProvider.todayEpochDay()
-        val progress = progressRepo.getAllForDeck(deckId)
-        val byId = progress.associateBy { it.cardId }
-
-        dueToday = deck.cards.count { c ->
-            val p = byId[c.id]
-            p != null && p.dueEpochDay <= today
-        }
-
-        newCount = deck.cards.count { c ->
-            byId[c.id] == null
-        }
-    }
+    // Capture in local val for smart cast (non-null since we checked above)
+    val currentDeck = deck!!
+    val currentCard = card!!
 
     val todayTotal = (dueToday + newCount).coerceAtLeast(1)
 
@@ -88,7 +103,7 @@ fun FeedbackScreen(
     }
     val done = (learnedCount + 1).coerceAtMost(todayTotal)
 
-    val correct = card.back
+    val correct = currentCard.back
     val isCorrect = AnswerNormalizer.isCorrect(userAnswer, correct)
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -110,15 +125,16 @@ fun FeedbackScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // ✅ теперь счётчик "на сегодня", а не total колоды
+                // Back button
+                BackCapsule(onClick = onBack)
+
+                Spacer(Modifier.weight(1f))
+
                 Capsule(text = "${done}/${todayTotal}")
 
                 Spacer(Modifier.weight(1f))
 
-                Capsule(text = "${deckEmoji(deckId)} ${deck.title}")
-
-                Spacer(Modifier.weight(1f))
-                Spacer(Modifier.width(56.dp))
+                Capsule(text = "${deckEmoji(deckId)} ${currentDeck.title}")
             }
 
             Spacer(Modifier.height(18.dp))
@@ -308,6 +324,22 @@ private fun Capsule(text: String, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = text,
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun BackCapsule(onClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
+        modifier = Modifier.clickableNoRipple(onClick)
+    ) {
+        Text(
+            text = "← Назад",
             color = Color.White,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)

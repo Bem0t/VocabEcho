@@ -23,6 +23,28 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS user_decks (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    createdAtEpochDay INTEGER NOT NULL
+                )
+            """.trimIndent())
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS user_cards (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    deckId TEXT NOT NULL,
+                    front TEXT NOT NULL,
+                    back TEXT NOT NULL,
+                    createdAtEpochDay INTEGER NOT NULL
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_user_cards_deckId ON user_cards(deckId)")
+        }
+    }
+
     fun get(context: Context): AppDatabase =
         db ?: synchronized(this) {
             db ?: Room.databaseBuilder(
@@ -30,7 +52,7 @@ object DatabaseProvider {
                 AppDatabase::class.java,
                 "app.db"
             )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
                 .also { db = it }
         }

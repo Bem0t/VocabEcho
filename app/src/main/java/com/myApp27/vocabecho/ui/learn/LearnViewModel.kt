@@ -3,7 +3,9 @@ package com.myApp27.vocabecho.ui.learn
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.myApp27.vocabecho.data.CombinedDeckRepository
 import com.myApp27.vocabecho.data.DeckRepository
+import com.myApp27.vocabecho.data.UserDeckRepository
 import com.myApp27.vocabecho.data.db.DatabaseProvider
 import com.myApp27.vocabecho.data.progress.ProgressRepository
 import com.myApp27.vocabecho.domain.model.Card
@@ -18,16 +20,18 @@ data class LearnUiState(
     val deckTitle: String = "",
     val currentCard: Card? = null,
     val remaining: Int = 0,
-    val dueToday: Int = 0,   // <-- добавили
-    val newCount: Int = 0,   // <-- добавили
+    val dueToday: Int = 0,
+    val newCount: Int = 0,
     val error: String? = null
 )
 
 
 class LearnViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val deckRepo = DeckRepository(app.applicationContext)
     private val db = DatabaseProvider.get(app.applicationContext)
+    private val assetRepo = DeckRepository(app.applicationContext)
+    private val userRepo = UserDeckRepository(db.userDeckDao(), db.userCardDao())
+    private val deckRepo = CombinedDeckRepository(assetRepo, userRepo)
     private val progressRepo = ProgressRepository(db.cardProgressDao(), db.cardStatsDao())
 
     private val _state = MutableStateFlow(LearnUiState())

@@ -7,6 +7,7 @@ object Routes {
     const val LEARN = "learn/{deckId}"
     const val FEEDBACK = "feedback/{deckId}/{cardId}/{answer}"
     const val PARENT = "parent"
+    const val ADD_DECK = "add_deck"
 
     fun learn(deckId: String) = "learn/$deckId"
 

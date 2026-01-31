@@ -37,7 +37,8 @@ private fun deckEmoji(deckId: String): String =
 @Composable
 fun LearnScreen(
     deckId: String,
-    onChecked: (cardId: String, answer: String) -> Unit
+    onChecked: (cardId: String, answer: String) -> Unit,
+    onBack: () -> Unit
 ) {
     val vm: LearnViewModel = viewModel()
     LaunchedEffect(deckId) { vm.load(deckId) }
@@ -70,14 +71,16 @@ fun LearnScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Back button
+                BackCapsule(onClick = onBack)
+
+                Spacer(Modifier.weight(1f))
+
                 Capsule(text = "${done}/${(done + state.remaining).coerceAtLeast(1)}")
 
                 Spacer(Modifier.weight(1f))
 
                 Capsule(text = "${deckEmoji(deckId)} ${state.deckTitle.ifBlank { "Тема" }}")
-
-                Spacer(Modifier.weight(1f))
-                Spacer(Modifier.width(56.dp))
             }
 
             Spacer(Modifier.height(14.dp))
@@ -201,6 +204,22 @@ private fun Capsule(text: String, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = text,
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun BackCapsule(onClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
+        modifier = Modifier.clickableNoRipple(onClick)
+    ) {
+        Text(
+            text = "← Назад",
             color = Color.White,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)

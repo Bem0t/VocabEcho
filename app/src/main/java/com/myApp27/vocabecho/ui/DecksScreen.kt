@@ -4,12 +4,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -18,43 +23,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.domain.model.Deck
+import com.myApp27.vocabecho.ui.decks.DecksViewModel
 
 @Composable
 fun DecksScreen(
     onDeckClick: (String) -> Unit,
     onParentsClick: () -> Unit
 ) {
-    val decks = listOf(
-        DeckTileUi(
-            id = "animals",
-            title = "Животные",
-            countText = "20 карточек",
-            tileColor = Color(0xFF66B05D),
-            imageRes = R.drawable.deck_animals
-        ),
-        DeckTileUi(
-            id = "food",
-            title = "Еда",
-            countText = "20 карточек",
-            tileColor = Color(0xFFF4B63A),
-            imageRes = R.drawable.deck_food
-        ),
-        DeckTileUi(
-            id = "transport",
-            title = "Транспорт",
-            countText = "20 карточек",
-            tileColor = Color(0xFF4FA7E3),
-            imageRes = R.drawable.deck_transport
-        ),
-        DeckTileUi(
-            id = "home",
-            title = "Дом",
-            countText = "20 карточек",
-            tileColor = Color(0xFF9A7DE8),
-            imageRes = R.drawable.deck_house
-        ),
-    )
+    val vm: DecksViewModel = viewModel()
+    val state by vm.state.collectAsState()
+
+    // Reload decks when screen appears (to pick up newly created decks)
+    LaunchedEffect(Unit) {
+        vm.loadDecks()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -68,15 +53,14 @@ fun DecksScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 18.dp)
-                .padding(top = 22.dp, bottom = 22.dp), // чуть больше снизу
+                .padding(top = 22.dp, bottom = 22.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ВЫПУКЛЫЙ ЗАГОЛОВОК (двойной текст)
             BubbleTitle(text = "Выбери тему")
 
             Spacer(Modifier.height(18.dp))
 
-            // Блок колод по центру
+            // Scrollable deck grid
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.TopCenter
@@ -86,42 +70,33 @@ fun DecksScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        DeckTile(
-                            ui = decks[0],
-                            modifier = Modifier.weight(1f),
-                            onClick = { onDeckClick(decks[0].id) }
-                        )
-                        DeckTile(
-                            ui = decks[1],
-                            modifier = Modifier.weight(1f),
-                            onClick = { onDeckClick(decks[1].id) }
-                        )
-                    }
+                    // Arrange decks in rows of 2
+                    val decks = state.decks
+                    val rows = decks.chunked(2)
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        DeckTile(
-                            ui = decks[2],
-                            modifier = Modifier.weight(1f),
-                            onClick = { onDeckClick(decks[2].id) }
-                        )
-                        DeckTile(
-                            ui = decks[3],
-                            modifier = Modifier.weight(1f),
-                            onClick = { onDeckClick(decks[3].id) }
-                        )
+                    rows.forEach { rowDecks ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowDecks.forEach { deck ->
+                                DeckTile(
+                                    ui = deckToTileUi(deck),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onDeckClick(deck.id) }
+                                )
+                            }
+                            // Fill empty space if odd number of decks
+                            if (rowDecks.size == 1) {
+                                Spacer(Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
 
-            // ОТСТУП МЕЖДУ КОЛОДАМИ И КНОПКОЙ (как на референсе)
             Spacer(Modifier.height(26.dp))
 
             ParentsButton(
@@ -129,6 +104,63 @@ fun DecksScreen(
                 onClick = onParentsClick
             )
         }
+    }
+}
+
+/**
+ * Convert domain Deck to UI tile model.
+ * Built-in decks have specific colors and images; user decks get defaults.
+ */
+private fun deckToTileUi(deck: Deck): DeckTileUi {
+    val cardCountText = "${deck.cards.size} ${cardWord(deck.cards.size)}"
+
+    return when (deck.id) {
+        "animals" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFF66B05D),
+            imageRes = R.drawable.deck_animals
+        )
+        "food" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFFF4B63A),
+            imageRes = R.drawable.deck_food
+        )
+        "transport" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFF4FA7E3),
+            imageRes = R.drawable.deck_transport
+        )
+        "home" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFF9A7DE8),
+            imageRes = R.drawable.deck_house
+        )
+        else -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFF7B8CDE), // Default color for user decks
+            imageRes = R.drawable.deck_animals // Reuse existing drawable
+        )
+    }
+}
+
+private fun cardWord(count: Int): String {
+    val mod10 = count % 10
+    val mod100 = count % 100
+    return when {
+        mod100 in 11..14 -> "карточек"
+        mod10 == 1 -> "карточка"
+        mod10 in 2..4 -> "карточки"
+        else -> "карточек"
     }
 }
 
