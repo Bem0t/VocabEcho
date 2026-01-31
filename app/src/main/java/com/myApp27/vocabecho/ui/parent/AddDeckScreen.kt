@@ -1,5 +1,10 @@
 package com.myApp27.vocabecho.ui.parent
 
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,14 +17,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AddDeckScreen(
@@ -27,6 +38,17 @@ fun AddDeckScreen(
 ) {
     val vm: AddDeckViewModel = viewModel()
     val state by vm.state.collectAsState()
+    val context = LocalContext.current
+
+    // Image picker launcher
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        vm.onImageSelected(uri?.toString())
+    }
+
+    // Load selected image preview
+    val imageBitmap = rememberBitmapFromUri(state.selectedImageUri, context)
 
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -78,6 +100,38 @@ fun AddDeckScreen(
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Например: Цвета") },
                         shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // Image picker section
+                    Text(
+                        text = "Обложка (необязательно)",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0B4AA2)
+                    )
+
+                    if (imageBitmap != null) {
+                        Image(
+                            bitmap = imageBitmap,
+                            contentDescription = "Обложка колоды",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    SmallButton(
+                        text = if (state.selectedImageUri != null) "Изменить картинку" else "Выбрать картинку",
+                        background = Color(0xFF7B8CDE),
+                        enabled = true,
+                        onClick = {
+                            imagePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        }
                     )
 
                     Spacer(Modifier.height(8.dp))
@@ -278,3 +332,27 @@ private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
         indication = null,
         interactionSource = MutableInteractionSource()
     ) { onClick() }
+
+@Composable
+private fun rememberBitmapFromUri(uriString: String?, context: android.content.Context): ImageBitmap? {
+    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(uriString) {
+        bitmap = if (uriString != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val uri = Uri.parse(uriString)
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } else {
+            null
+        }
+    }
+
+    return bitmap
+}

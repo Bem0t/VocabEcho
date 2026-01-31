@@ -23,7 +23,8 @@ import com.myApp27.vocabecho.R
 @Composable
 fun ParentSettingsScreen(
     onBack: () -> Unit,
-    onAddDeckClick: () -> Unit
+    onAddDeckClick: () -> Unit,
+    onManageDecksClick: () -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -73,6 +74,12 @@ fun ParentSettingsScreen(
                         text = "Добавить колоду",
                         background = Color(0xFF3B87D9),
                         onClick = onAddDeckClick
+                    )
+
+                    MenuButton(
+                        text = "Мои колоды",
+                        background = Color(0xFF66B05D),
+                        onClick = onManageDecksClick
                     )
                 }
             }

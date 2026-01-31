@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
 data class Deck(
     val id: String,
     val title: String,
-    val cards: List<Card>
+    val cards: List<Card>,
+    val imageUri: String? = null
 )
 
 @Serializable

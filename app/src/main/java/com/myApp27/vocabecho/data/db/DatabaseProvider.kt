@@ -45,6 +45,12 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE user_decks ADD COLUMN imageUri TEXT")
+        }
+    }
+
     fun get(context: Context): AppDatabase =
         db ?: synchronized(this) {
             db ?: Room.databaseBuilder(
@@ -52,7 +58,7 @@ object DatabaseProvider {
                 AppDatabase::class.java,
                 "app.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
                 .also { db = it }
         }

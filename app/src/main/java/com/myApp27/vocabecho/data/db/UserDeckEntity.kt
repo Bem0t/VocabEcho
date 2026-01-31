@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class UserDeckEntity(
     @PrimaryKey val id: String,
     val title: String,
-    val createdAtEpochDay: Long
+    val createdAtEpochDay: Long,
+    val imageUri: String? = null
 )

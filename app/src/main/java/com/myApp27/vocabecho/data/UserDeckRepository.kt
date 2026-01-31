@@ -16,17 +16,23 @@ class UserDeckRepository(
     /**
      * Create a new deck with cards.
      * @param title Deck title
+     * @param imageUri Optional cover image URI
      * @param cards List of (front, back) pairs
      * @return The created deck's ID
      */
-    suspend fun createDeckWithCards(title: String, cards: List<Pair<String, String>>): String {
+    suspend fun createDeckWithCards(
+        title: String,
+        imageUri: String?,
+        cards: List<Pair<String, String>>
+    ): String {
         val today = TimeProvider.todayEpochDay()
         val deckId = UUID.randomUUID().toString()
 
         val deckEntity = UserDeckEntity(
             id = deckId,
             title = title.trim(),
-            createdAtEpochDay = today
+            createdAtEpochDay = today,
+            imageUri = imageUri
         )
         deckDao.insert(deckEntity)
 
@@ -54,7 +60,8 @@ class UserDeckRepository(
         return Deck(
             id = deckEntity.id,
             title = deckEntity.title,
-            cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) }
+            cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) },
+            imageUri = deckEntity.imageUri
         )
     }
 
@@ -68,7 +75,8 @@ class UserDeckRepository(
             Deck(
                 id = deckEntity.id,
                 title = deckEntity.title,
-                cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) }
+                cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) },
+                imageUri = deckEntity.imageUri
             )
         }
     }

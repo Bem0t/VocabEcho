@@ -11,6 +11,7 @@ import com.myApp27.vocabecho.ui.FeedbackScreen
 import com.myApp27.vocabecho.ui.LearnScreen
 import com.myApp27.vocabecho.ui.ParentSettingsScreen
 import com.myApp27.vocabecho.ui.parent.AddDeckScreen
+import com.myApp27.vocabecho.ui.parent.ManageDecksScreen
 
 @Composable
 fun AppNavHost() {
@@ -84,13 +85,21 @@ fun AppNavHost() {
         composable(Routes.PARENT) {
             ParentSettingsScreen(
                 onBack = { navController.popBackStack() },
-                onAddDeckClick = { navController.navigate(Routes.ADD_DECK) }
+                onAddDeckClick = { navController.navigate(Routes.ADD_DECK) },
+                onManageDecksClick = { navController.navigate(Routes.MANAGE_DECKS) }
             )
         }
 
         // 5) Добавление колоды
         composable(Routes.ADD_DECK) {
             AddDeckScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 6) Управление колодами
+        composable(Routes.MANAGE_DECKS) {
+            ManageDecksScreen(
                 onBack = { navController.popBackStack() }
             )
         }

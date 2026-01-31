@@ -14,6 +14,7 @@ data class AddDeckUiState(
     val currentFront: String = "",
     val currentBack: String = "",
     val cards: List<Pair<String, String>> = emptyList(),
+    val selectedImageUri: String? = null,
     val isSaving: Boolean = false,
     val savedSuccessfully: Boolean = false,
     val errorMessage: String? = null
@@ -36,6 +37,10 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
 
     fun onBackChanged(value: String) {
         _state.value = _state.value.copy(currentBack = value)
+    }
+
+    fun onImageSelected(uri: String?) {
+        _state.value = _state.value.copy(selectedImageUri = uri)
     }
 
     fun addCard() {
@@ -75,7 +80,7 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
 
         viewModelScope.launch {
             try {
-                userRepo.createDeckWithCards(title, cards)
+                userRepo.createDeckWithCards(title, _state.value.selectedImageUri, cards)
                 _state.value = _state.value.copy(isSaving = false, savedSuccessfully = true)
                 onSuccess()
             } catch (e: Exception) {

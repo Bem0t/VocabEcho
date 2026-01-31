@@ -10,7 +10,7 @@ import androidx.room.RoomDatabase
         UserDeckEntity::class,
         UserCardEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

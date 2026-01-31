@@ -1,5 +1,7 @@
 package com.myApp27.vocabecho.ui
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,25 +13,29 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.Deck
 import com.myApp27.vocabecho.ui.decks.DecksViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun DecksScreen(
@@ -93,9 +99,11 @@ fun DecksScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            val context = LocalContext.current
                             rowDecks.forEach { deck ->
                                 DeckTile(
                                     ui = deckToTileUi(deck),
+                                    context = context,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onDeckClick(deck.id) }
                                 )
@@ -132,35 +140,45 @@ private fun deckToTileUi(deck: Deck): DeckTileUi {
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFF66B05D),
-            imageRes = R.drawable.deck_animals
+            imageRes = R.drawable.deck_animals,
+            imageUri = null,
+            isBuiltIn = true
         )
         "food" -> DeckTileUi(
             id = deck.id,
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFFF4B63A),
-            imageRes = R.drawable.deck_food
+            imageRes = R.drawable.deck_food,
+            imageUri = null,
+            isBuiltIn = true
         )
         "transport" -> DeckTileUi(
             id = deck.id,
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFF4FA7E3),
-            imageRes = R.drawable.deck_transport
+            imageRes = R.drawable.deck_transport,
+            imageUri = null,
+            isBuiltIn = true
         )
         "home" -> DeckTileUi(
             id = deck.id,
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFF9A7DE8),
-            imageRes = R.drawable.deck_house
+            imageRes = R.drawable.deck_house,
+            imageUri = null,
+            isBuiltIn = true
         )
         else -> DeckTileUi(
             id = deck.id,
             title = deck.title,
             countText = cardCountText,
-            tileColor = Color(0xFF7B8CDE), // Default color for user decks
-            imageRes = R.drawable.deck_animals // Reuse existing drawable
+            tileColor = Color(0xFF7B8CDE),
+            imageRes = null,
+            imageUri = deck.imageUri,
+            isBuiltIn = false
         )
     }
 }
@@ -202,16 +220,26 @@ private data class DeckTileUi(
     val title: String,
     val countText: String,
     val tileColor: Color,
-    val imageRes: Int
+    val imageRes: Int?,
+    val imageUri: String?,
+    val isBuiltIn: Boolean
 )
 
 @Composable
 private fun DeckTile(
     ui: DeckTileUi,
+    context: android.content.Context,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(18.dp)
+
+    // Load image from URI for user decks
+    val userImageBitmap = if (!ui.isBuiltIn && ui.imageUri != null) {
+        rememberBitmapFromUri(ui.imageUri, context)
+    } else {
+        null
+    }
 
     // Белая рамка + тень
     Box(
@@ -229,22 +257,57 @@ private fun DeckTile(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Box(Modifier.fillMaxSize()) {
-                Image(
-                    painter = painterResource(ui.imageRes),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                when {
+                    // Built-in deck: show drawable
+                    ui.isBuiltIn && ui.imageRes != null -> {
+                        Image(
+                            painter = painterResource(ui.imageRes),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    // User deck with image: show from URI
+                    !ui.isBuiltIn && userImageBitmap != null -> {
+                        Image(
+                            bitmap = userImageBitmap,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    // User deck without image: show large title
+                    !ui.isBuiltIn -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = ui.title,
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
+                }
 
-                Text(
-                    text = ui.title,
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(14.dp)
-                )
+                // Title overlay (only for built-in or decks with images)
+                if (ui.isBuiltIn || userImageBitmap != null) {
+                    Text(
+                        text = ui.title,
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(14.dp)
+                    )
+                }
 
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -263,6 +326,30 @@ private fun DeckTile(
             }
         }
     }
+}
+
+@Composable
+private fun rememberBitmapFromUri(uriString: String?, context: android.content.Context): ImageBitmap? {
+    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(uriString) {
+        bitmap = if (uriString != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val uri = Uri.parse(uriString)
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } else {
+            null
+        }
+    }
+
+    return bitmap
 }
 
 @Composable
