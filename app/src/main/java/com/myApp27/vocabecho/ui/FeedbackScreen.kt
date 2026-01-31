@@ -29,7 +29,6 @@ import com.myApp27.vocabecho.data.db.DatabaseProvider
 import com.myApp27.vocabecho.data.progress.ProgressRepository
 import com.myApp27.vocabecho.data.settings.ParentSettingsRepository
 import com.myApp27.vocabecho.domain.answer.AnswerNormalizer
-import com.myApp27.vocabecho.domain.model.Grade
 import com.myApp27.vocabecho.domain.model.ParentSettings
 import com.myApp27.vocabecho.domain.time.TimeProvider
 import kotlinx.coroutines.launch
@@ -45,7 +44,7 @@ fun FeedbackScreen(
 
     val deckRepo = remember { DeckRepository(context) }
     val db = remember { DatabaseProvider.get(context) }
-    val progressRepo = remember { ProgressRepository(db.cardProgressDao()) }
+    val progressRepo = remember { ProgressRepository(db.cardProgressDao(), db.cardStatsDao()) }
     val settingsRepo = remember { ParentSettingsRepository(context) }
 
     val settings by settingsRepo.settingsFlow.collectAsState(initial = ParentSettings())
@@ -168,23 +167,33 @@ fun FeedbackScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            // ✅ Кнопки сложности: такие же "красивые", как на Learn (белая рамка + тень)
+            // Подсказка: что думает система
+            Text(
+                text = if (isCorrect) "Я думаю: верно" else "Я думаю: ошибка",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            // Кнопки подтверждения: Да / Нет
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CuteButton(
-                    text = "😣 Снова",
+                    text = "Нет",
                     background = Color(0xFFF05A3A),
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     onClick = {
                         scope.launch {
-                            progressRepo.gradeCard(
+                            progressRepo.applyAnswerResult(
                                 deckId = deckId,
                                 cardId = cardId,
                                 todayEpochDay = TimeProvider.todayEpochDay(),
-                                grade = Grade.AGAIN,
+                                isCorrect = false,
                                 settings = settings
                             )
                             onNext()
@@ -193,36 +202,17 @@ fun FeedbackScreen(
                 )
 
                 CuteButton(
-                    text = "🙂 Сложно",
-                    background = Color(0xFFF4B63A),
-                    modifier = Modifier.weight(1f),
-                    enabled = true,
-                    onClick = {
-                        scope.launch {
-                            progressRepo.gradeCard(
-                                deckId = deckId,
-                                cardId = cardId,
-                                todayEpochDay = TimeProvider.todayEpochDay(),
-                                grade = Grade.HARD,
-                                settings = settings
-                            )
-                            onNext()
-                        }
-                    }
-                )
-
-                CuteButton(
-                    text = "😄 Легко",
+                    text = "Да",
                     background = Color(0xFF3B87D9),
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     onClick = {
                         scope.launch {
-                            progressRepo.gradeCard(
+                            progressRepo.applyAnswerResult(
                                 deckId = deckId,
                                 cardId = cardId,
                                 todayEpochDay = TimeProvider.todayEpochDay(),
-                                grade = Grade.EASY,
+                                isCorrect = true,
                                 settings = settings
                             )
                             onNext()

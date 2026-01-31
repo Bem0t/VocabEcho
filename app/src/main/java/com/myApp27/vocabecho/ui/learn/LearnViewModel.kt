@@ -28,7 +28,7 @@ class LearnViewModel(app: Application) : AndroidViewModel(app) {
 
     private val deckRepo = DeckRepository(app.applicationContext)
     private val db = DatabaseProvider.get(app.applicationContext)
-    private val progressRepo = ProgressRepository(db.cardProgressDao())
+    private val progressRepo = ProgressRepository(db.cardProgressDao(), db.cardStatsDao())
 
     private val _state = MutableStateFlow(LearnUiState())
     val state: StateFlow<LearnUiState> = _state
