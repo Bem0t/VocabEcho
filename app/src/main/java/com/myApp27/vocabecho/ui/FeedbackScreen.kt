@@ -85,9 +85,9 @@ fun FeedbackScreen(
     // "сделано сегодня" = количество карточек, повторённых сегодня (по lastReviewedEpochDay)
     var learnedCount by remember { mutableStateOf(0) }
     LaunchedEffect(deckId) {
-        learnedCount = progressRepo.countReviewedToday(deckId)
+        learnedCount = progressRepo.countReviewedToday(deckId, TimeProvider.todayEpochDay())
     }
-    val done = learnedCount.coerceAtMost(todayTotal)
+    val done = (learnedCount + 1).coerceAtMost(todayTotal)
 
     val correct = card.back
     val isCorrect = AnswerNormalizer.isCorrect(userAnswer, correct)

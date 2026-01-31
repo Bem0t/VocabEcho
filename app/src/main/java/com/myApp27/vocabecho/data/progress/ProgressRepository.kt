@@ -5,7 +5,6 @@ import com.myApp27.vocabecho.data.db.CardProgressEntity
 import com.myApp27.vocabecho.domain.model.Grade
 import com.myApp27.vocabecho.domain.model.ParentSettings
 import com.myApp27.vocabecho.domain.srs.Scheduler
-import com.myApp27.vocabecho.domain.time.TimeProvider
 
 class ProgressRepository(
     private val dao: CardProgressDao
@@ -37,6 +36,6 @@ class ProgressRepository(
     suspend fun getAllForDeck(deckId: String): List<CardProgressEntity> =
         dao.getAllForDeck(deckId)
 
-    suspend fun countReviewedToday(deckId: String): Int =
-        dao.countReviewedToday(deckId, TimeProvider.todayEpochDay())
+    suspend fun countReviewedToday(deckId: String, todayEpochDay: Long): Int =
+        dao.countReviewedToday(deckId, todayEpochDay)
 }
