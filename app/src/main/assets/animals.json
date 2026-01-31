@@ -1,0 +1,26 @@
+{
+  "id": "animals",
+  "title": "Животные",
+  "cards": [
+    { "id": "animals_01", "front": "Кошка", "back": "cat" },
+    { "id": "animals_02", "front": "Собака", "back": "dog" },
+    { "id": "animals_03", "front": "Птица", "back": "bird" },
+    { "id": "animals_04", "front": "Рыба", "back": "fish" },
+    { "id": "animals_05", "front": "Лошадь", "back": "horse" },
+    { "id": "animals_06", "front": "Корова", "back": "cow" },
+    { "id": "animals_07", "front": "Свинья", "back": "pig" },
+    { "id": "animals_08", "front": "Овца", "back": "sheep" },
+    { "id": "animals_09", "front": "Коза", "back": "goat" },
+    { "id": "animals_10", "front": "Кролик", "back": "rabbit" },
+    { "id": "animals_11", "front": "Медведь", "back": "bear" },
+    { "id": "animals_12", "front": "Лиса", "back": "fox" },
+    { "id": "animals_13", "front": "Волк", "back": "wolf" },
+    { "id": "animals_14", "front": "Лев", "back": "lion" },
+    { "id": "animals_15", "front": "Тигр", "back": "tiger" },
+    { "id": "animals_16", "front": "Слон", "back": "elephant" },
+    { "id": "animals_17", "front": "Обезьяна", "back": "monkey" },
+    { "id": "animals_18", "front": "Утка", "back": "duck" },
+    { "id": "animals_19", "front": "Курица", "back": "chicken" },
+    { "id": "animals_20", "front": "Лягушка", "back": "frog" }
+  ]
+}

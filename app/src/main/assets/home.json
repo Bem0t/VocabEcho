@@ -1,0 +1,26 @@
+{
+  "id": "home",
+  "title": "Дом",
+  "cards": [
+    { "id": "home_01", "front": "Дом", "back": "house" },
+    { "id": "home_02", "front": "Комната", "back": "room" },
+    { "id": "home_03", "front": "Дверь", "back": "door" },
+    { "id": "home_04", "front": "Окно", "back": "window" },
+    { "id": "home_05", "front": "Стол", "back": "table" },
+    { "id": "home_06", "front": "Стул", "back": "chair" },
+    { "id": "home_07", "front": "Кровать", "back": "bed" },
+    { "id": "home_08", "front": "Шкаф", "back": "wardrobe" },
+    { "id": "home_09", "front": "Лампа", "back": "lamp" },
+    { "id": "home_10", "front": "Книга", "back": "book" },
+    { "id": "home_11", "front": "Игрушка", "back": "toy" },
+    { "id": "home_12", "front": "Кухня", "back": "kitchen" },
+    { "id": "home_13", "front": "Ванная", "back": "bathroom" },
+    { "id": "home_14", "front": "Туалет", "back": "toilet" },
+    { "id": "home_15", "front": "Холодильник", "back": "fridge" },
+    { "id": "home_16", "front": "Плита", "back": "stove" },
+    { "id": "home_17", "front": "Кружка", "back": "mug" },
+    { "id": "home_18", "front": "Тарелка", "back": "plate" },
+    { "id": "home_19", "front": "Ложка", "back": "spoon" },
+    { "id": "home_20", "front": "Вилка", "back": "fork" }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "transport",
+  "title": "Транспорт",
+  "cards": [
+    { "id": "transport_01", "front": "Машина", "back": "car" },
+    { "id": "transport_02", "front": "Автобус", "back": "bus" },
+    { "id": "transport_03", "front": "Поезд", "back": "train" },
+    { "id": "transport_04", "front": "Самолёт", "back": "plane" },
+    { "id": "transport_05", "front": "Корабль", "back": "ship" },
+    { "id": "transport_06", "front": "Лодка", "back": "boat" },
+    { "id": "transport_07", "front": "Велосипед", "back": "bicycle" },
+    { "id": "transport_08", "front": "Мотоцикл", "back": "motorcycle" },
+    { "id": "transport_09", "front": "Такси", "back": "taxi" },
+    { "id": "transport_10", "front": "Трамвай", "back": "tram" },
+    { "id": "transport_11", "front": "Метро", "back": "subway" },
+    { "id": "transport_12", "front": "Грузовик", "back": "truck" },
+    { "id": "transport_13", "front": "Скорая помощь", "back": "ambulance" },
+    { "id": "transport_14", "front": "Пожарная машина", "back": "fire truck" },
+    { "id": "transport_15", "front": "Полицейская машина", "back": "police car" },
+    { "id": "transport_16", "front": "Вертолёт", "back": "helicopter" },
+    { "id": "transport_17", "front": "Ракета", "back": "rocket" },
+    { "id": "transport_18", "front": "Самокат", "back": "scooter" },
+    { "id": "transport_19", "front": "Кран", "back": "crane" },
+    { "id": "transport_20", "front": "Экскаватор", "back": "excavator" }
+  ]
+}

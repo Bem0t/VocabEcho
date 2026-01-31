@@ -1,0 +1,26 @@
+{
+  "id": "food",
+  "title": "Еда",
+  "cards": [
+    { "id": "food_01", "front": "Яблоко", "back": "apple" },
+    { "id": "food_02", "front": "Банан", "back": "banana" },
+    { "id": "food_03", "front": "Апельсин", "back": "orange" },
+    { "id": "food_04", "front": "Виноград", "back": "grapes" },
+    { "id": "food_05", "front": "Клубника", "back": "strawberry" },
+    { "id": "food_06", "front": "Хлеб", "back": "bread" },
+    { "id": "food_07", "front": "Молоко", "back": "milk" },
+    { "id": "food_08", "front": "Вода", "back": "water" },
+    { "id": "food_09", "front": "Сок", "back": "juice" },
+    { "id": "food_10", "front": "Сыр", "back": "cheese" },
+    { "id": "food_11", "front": "Яйцо", "back": "egg" },
+    { "id": "food_12", "front": "Рис", "back": "rice" },
+    { "id": "food_13", "front": "Макароны", "back": "pasta" },
+    { "id": "food_14", "front": "Курица", "back": "chicken" },
+    { "id": "food_15", "front": "Рыба", "back": "fish" },
+    { "id": "food_16", "front": "Суп", "back": "soup" },
+    { "id": "food_17", "front": "Салат", "back": "salad" },
+    { "id": "food_18", "front": "Морковь", "back": "carrot" },
+    { "id": "food_19", "front": "Картофель", "back": "potato" },
+    { "id": "food_20", "front": "Помидор", "back": "tomato" }
+  ]
+}
