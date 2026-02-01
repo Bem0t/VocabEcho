@@ -80,4 +80,21 @@ class UserDeckRepository(
             )
         }
     }
+
+    /**
+     * Get a single card by ID.
+     */
+    suspend fun getCard(deckId: String, cardId: String): Card? {
+        val entity = cardDao.getById(deckId, cardId) ?: return null
+        return Card(id = entity.id, front = entity.front, back = entity.back)
+    }
+
+    /**
+     * Update card front and back text.
+     * @return true if update succeeded
+     */
+    suspend fun updateCard(deckId: String, cardId: String, front: String, back: String): Boolean {
+        val rowsUpdated = cardDao.updateText(deckId, cardId, front.trim(), back.trim())
+        return rowsUpdated == 1
+    }
 }

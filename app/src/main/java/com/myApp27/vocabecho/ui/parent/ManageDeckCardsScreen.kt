@@ -1,9 +1,7 @@
 package com.myApp27.vocabecho.ui.parent
 
-import android.graphics.BitmapFactory
-import android.net.Uri
+import android.app.Application
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -14,11 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -29,27 +24,33 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
-import com.myApp27.vocabecho.domain.model.Deck
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.myApp27.vocabecho.domain.model.Card
 
 @Composable
-fun ManageDecksScreen(
+fun ManageDeckCardsScreen(
+    deckId: String,
     onBack: () -> Unit,
-    onOpenDeck: (deckId: String) -> Unit
+    onEditCard: (cardId: String) -> Unit
 ) {
-    val vm: ManageDecksViewModel = viewModel()
-    val state by vm.state.collectAsState()
     val context = LocalContext.current
+    val vm: ManageDeckCardsViewModel = viewModel(
+        factory = ManageDeckCardsViewModelFactory(
+            context.applicationContext as Application,
+            deckId
+        )
+    )
+    val state by vm.state.collectAsState()
 
-    // Reload on resume
+    // Reload on resume to reflect edits
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                vm.loadDecks()
+                vm.load()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -73,7 +74,7 @@ fun ManageDecksScreen(
                 .padding(top = 18.dp, bottom = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HeaderPill(text = "Мои колоды")
+            HeaderPill(text = if (state.deckTitle.isNotBlank()) state.deckTitle else "Карточки")
 
             Spacer(Modifier.height(18.dp))
 
@@ -91,10 +92,10 @@ fun ManageDecksScreen(
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Загрузка...")
                     }
-                } else if (state.decks.isEmpty()) {
+                } else if (state.cards.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Нет созданных колод",
+                            text = "Нет карточек",
                             color = Color(0xFF666666),
                             textAlign = TextAlign.Center
                         )
@@ -105,13 +106,13 @@ fun ManageDecksScreen(
                             .fillMaxSize()
                             .padding(16.dp)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        state.decks.forEach { deck ->
-                            DeckListItem(
-                                deck = deck,
-                                context = context,
-                                onClick = { onOpenDeck(deck.id) }
+                        state.cards.forEachIndexed { index, card ->
+                            CardListItem(
+                                index = index + 1,
+                                card = card,
+                                onClick = { onEditCard(card.id) }
                             )
                         }
                     }
@@ -126,64 +127,36 @@ fun ManageDecksScreen(
 }
 
 @Composable
-private fun DeckListItem(
-    deck: Deck,
-    context: android.content.Context,
+private fun CardListItem(
+    index: Int,
+    card: Card,
     onClick: () -> Unit
 ) {
-    val imageBitmap = rememberBitmapFromUri(deck.imageUri, context)
-
     Card(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF4EEF8)),
         modifier = Modifier.clickableNoRipple(onClick)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(12.dp)
         ) {
-            // Thumbnail or title placeholder
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF7B8CDE)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (imageBitmap != null) {
-                    Image(
-                        bitmap = imageBitmap,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Text(
-                        text = deck.title.take(2).uppercase(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = deck.title,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0B4AA2),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${deck.cards.size} ${cardWord(deck.cards.size)}",
-                    color = Color(0xFF666666),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            Text(
+                text = "$index. ${card.front}",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0B4AA2),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = card.back,
+                color = Color(0xFF666666),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -199,7 +172,9 @@ private fun HeaderPill(text: String) {
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFF0B4AA2)
+            color = Color(0xFF0B4AA2),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -226,43 +201,18 @@ private fun BackPill(text: String, onClick: () -> Unit) {
     }
 }
 
-private fun cardWord(count: Int): String {
-    val mod10 = count % 10
-    val mod100 = count % 100
-    return when {
-        mod100 in 11..14 -> "карточек"
-        mod10 == 1 -> "карточка"
-        mod10 in 2..4 -> "карточки"
-        else -> "карточек"
-    }
-}
-
-@Composable
-private fun rememberBitmapFromUri(uriString: String?, context: android.content.Context): ImageBitmap? {
-    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-
-    LaunchedEffect(uriString) {
-        bitmap = if (uriString != null) {
-            withContext(Dispatchers.IO) {
-                try {
-                    val uri = Uri.parse(uriString)
-                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                        BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-                    }
-                } catch (e: Exception) {
-                    null
-                }
-            }
-        } else {
-            null
-        }
-    }
-
-    return bitmap
-}
-
 private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
     clickable(
         indication = null,
         interactionSource = MutableInteractionSource()
     ) { onClick() }
+
+class ManageDeckCardsViewModelFactory(
+    private val app: Application,
+    private val deckId: String
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return ManageDeckCardsViewModel(app, deckId) as T
+    }
+}

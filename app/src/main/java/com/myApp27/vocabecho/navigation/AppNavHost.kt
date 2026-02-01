@@ -11,6 +11,8 @@ import com.myApp27.vocabecho.ui.FeedbackScreen
 import com.myApp27.vocabecho.ui.LearnScreen
 import com.myApp27.vocabecho.ui.ParentSettingsScreen
 import com.myApp27.vocabecho.ui.parent.AddDeckScreen
+import com.myApp27.vocabecho.ui.parent.EditUserCardScreen
+import com.myApp27.vocabecho.ui.parent.ManageDeckCardsScreen
 import com.myApp27.vocabecho.ui.parent.ManageDecksScreen
 
 @Composable
@@ -100,6 +102,43 @@ fun AppNavHost() {
         // 6) Управление колодами
         composable(Routes.MANAGE_DECKS) {
             ManageDecksScreen(
+                onBack = { navController.popBackStack() },
+                onOpenDeck = { deckId ->
+                    navController.navigate(Routes.manageDeckCards(deckId))
+                }
+            )
+        }
+
+        // 7) Карточки колоды
+        composable(
+            route = Routes.MANAGE_DECK_CARDS,
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
+
+            ManageDeckCardsScreen(
+                deckId = deckId,
+                onBack = { navController.popBackStack() },
+                onEditCard = { cardId ->
+                    navController.navigate(Routes.editUserCard(deckId, cardId))
+                }
+            )
+        }
+
+        // 8) Редактирование карточки
+        composable(
+            route = Routes.EDIT_USER_CARD,
+            arguments = listOf(
+                navArgument("deckId") { type = NavType.StringType },
+                navArgument("cardId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
+            val cardId = backStackEntry.arguments?.getString("cardId").orEmpty()
+
+            EditUserCardScreen(
+                deckId = deckId,
+                cardId = cardId,
                 onBack = { navController.popBackStack() }
             )
         }
