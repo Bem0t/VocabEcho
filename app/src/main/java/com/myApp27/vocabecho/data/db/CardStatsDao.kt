@@ -16,4 +16,7 @@ interface CardStatsDao {
 
     @Query("DELETE FROM card_stats WHERE cardId = :cardId")
     suspend fun deleteByCardId(cardId: String): Int
+
+    @Query("DELETE FROM card_stats WHERE deckId = :deckId")
+    suspend fun deleteByDeckId(deckId: String): Int
 }

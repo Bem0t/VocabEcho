@@ -3,6 +3,7 @@ package com.myApp27.vocabecho.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -31,6 +32,36 @@ fun Modifier.pressScale(
         scaleX = scale,
         scaleY = scale
     )
+}
+
+/**
+ * Convenience modifier that combines pressScale animation with clickable.
+ * Creates its own interactionSource internally.
+ * No ripple indication.
+ */
+fun Modifier.clickableWithScale(
+    enabled: Boolean = true,
+    onClick: () -> Unit
+): Modifier = composed {
+    val interactionSource = remember { MutableInteractionSource() }
+    this
+        .pressScale(interactionSource)
+        .clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            onClick = onClick
+        )
+}
+
+/**
+ * Creates a remembered interaction source for press animations.
+ * Use this when you need to pass the same interactionSource to both
+ * pressScale and clickable modifiers.
+ */
+@Composable
+fun rememberPressInteraction(): MutableInteractionSource {
+    return remember { MutableInteractionSource() }
 }
 
 /**

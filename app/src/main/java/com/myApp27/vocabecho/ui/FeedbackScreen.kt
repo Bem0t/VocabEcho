@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import com.myApp27.vocabecho.data.CombinedDeckRepository
 import com.myApp27.vocabecho.data.DeckRepository
 import com.myApp27.vocabecho.data.UserDeckRepository
@@ -333,10 +335,17 @@ private fun Capsule(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun BackCapsule(onClick: () -> Unit) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
-        modifier = Modifier.clickableNoRipple(onClick)
+        modifier = Modifier
+            .pressScale(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Text(
             text = "← Назад",
@@ -347,7 +356,7 @@ private fun BackCapsule(onClick: () -> Unit) {
     }
 }
 
-/** Кнопка с белой рамкой + тенью (как на LearnScreen) */
+/** Кнопка с белой рамкой + тенью + press scale анимацией */
 @Composable
 private fun CuteButton(
     text: String,
@@ -358,14 +367,22 @@ private fun CuteButton(
 ) {
     val shapeOuter = RoundedCornerShape(18.dp)
     val shapeInner = RoundedCornerShape(16.dp)
+    val interactionSource = rememberPressInteraction()
 
     Box(
         modifier = modifier
             .height(52.dp)
+            .pressScale(interactionSource)
             .shadow(12.dp, shapeOuter)
             .background(Color.White, shapeOuter)
             .padding(4.dp)
-            .then(if (enabled) Modifier.clickableNoRipple(onClick) else Modifier)
+            .then(
+                if (enabled) Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                ) else Modifier
+            )
     ) {
         Card(
             shape = shapeInner,

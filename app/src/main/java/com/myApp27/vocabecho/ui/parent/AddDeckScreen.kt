@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -272,13 +274,21 @@ private fun SmallButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = background),
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
-            .then(if (enabled) Modifier.clickableNoRipple(onClick) else Modifier)
+            .pressScale(interactionSource)
+            .then(
+                if (enabled) Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                ) else Modifier
+            )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
@@ -300,14 +310,20 @@ private fun ActionButton(
 ) {
     val shapeOuter = RoundedCornerShape(18.dp)
     val shapeInner = RoundedCornerShape(16.dp)
+    val interactionSource = rememberPressInteraction()
 
     Box(
         modifier = modifier
             .height(52.dp)
+            .pressScale(interactionSource)
             .shadow(12.dp, shapeOuter)
             .background(Color.White, shapeOuter)
             .padding(4.dp)
-            .clickableNoRipple(onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Card(
             shape = shapeInner,

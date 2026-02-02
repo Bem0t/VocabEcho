@@ -32,4 +32,7 @@ interface CardProgressDao {
 
     @Query("DELETE FROM card_progress WHERE cardId = :cardId")
     suspend fun deleteByCardId(cardId: String): Int
+
+    @Query("DELETE FROM card_progress WHERE deckId = :deckId")
+    suspend fun deleteByDeckId(deckId: String): Int
 }

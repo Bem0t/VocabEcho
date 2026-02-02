@@ -23,6 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.ui.components.animatedBorderColor
+import com.myApp27.vocabecho.ui.components.clickableWithScale
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberFocusInteraction
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import com.myApp27.vocabecho.ui.learn.LearnViewModel
 
 private fun deckEmoji(deckId: String): String =
@@ -133,7 +138,14 @@ fun LearnScreen(
 
                         Spacer(Modifier.height(10.dp))
 
-                        // Поле ввода — рамка менее заметная (как на референсе)
+                        // Поле ввода с animated focus border
+                        val (answerInteraction, isAnswerFocused) = rememberFocusInteraction()
+                        val answerBorderColor = animatedBorderColor(
+                            isFocused = isAnswerFocused,
+                            focusedColor = Color(0xFF0B4AA2),
+                            unfocusedColor = Color(0xFFD0C8BE)
+                        )
+
                         OutlinedTextField(
                             value = userAnswer,
                             onValueChange = { userAnswer = it },
@@ -141,15 +153,15 @@ fun LearnScreen(
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text("") },
                             shape = RoundedCornerShape(12.dp),
+                            interactionSource = answerInteraction,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color(0xFFF7F3EC),
                                 unfocusedContainerColor = Color(0xFFF7F3EC),
                                 disabledContainerColor = Color(0xFFF7F3EC),
 
-                                // делаем обводку почти незаметной
-                                focusedBorderColor = Color(0x33FFFFFF),
-                                unfocusedBorderColor = Color(0x22FFFFFF),
-                                disabledBorderColor = Color(0x22FFFFFF),
+                                focusedBorderColor = answerBorderColor,
+                                unfocusedBorderColor = answerBorderColor,
+                                disabledBorderColor = Color(0xFFD0C8BE),
 
                                 cursorColor = Color(0xFF0B4AA2),
                                 focusedTextColor = Color(0xFF0B4AA2),
@@ -213,10 +225,17 @@ private fun Capsule(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun BackCapsule(onClick: () -> Unit) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
-        modifier = Modifier.clickableNoRipple(onClick)
+        modifier = Modifier
+            .pressScale(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Text(
             text = "← Назад",
@@ -233,6 +252,7 @@ private fun BackCapsule(onClick: () -> Unit) {
  * - тень
  * - цветная внутренняя часть
  * - без ripple (как в твоём стиле)
+ * - с press scale анимацией
  */
 @Composable
 private fun CuteButton(
@@ -244,14 +264,22 @@ private fun CuteButton(
 ) {
     val shapeOuter = RoundedCornerShape(18.dp)
     val shapeInner = RoundedCornerShape(16.dp)
+    val interactionSource = rememberPressInteraction()
 
     Box(
         modifier = modifier
             .height(54.dp)
+            .pressScale(interactionSource)
             .shadow(12.dp, shapeOuter)
             .background(Color.White, shapeOuter)
             .padding(4.dp)
-            .then(if (enabled) Modifier.clickableNoRipple(onClick) else Modifier)
+            .then(
+                if (enabled) Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                ) else Modifier
+            )
     ) {
         Card(
             shape = shapeInner,

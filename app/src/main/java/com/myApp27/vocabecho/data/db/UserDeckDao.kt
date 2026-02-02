@@ -16,4 +16,7 @@ interface UserDeckDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(deck: UserDeckEntity)
+
+    @Query("DELETE FROM user_decks WHERE id = :deckId")
+    suspend fun deleteById(deckId: String): Int
 }

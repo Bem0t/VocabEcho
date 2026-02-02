@@ -22,4 +22,7 @@ interface UserCardDao {
 
     @Query("DELETE FROM user_cards WHERE id = :cardId AND deckId = :deckId")
     suspend fun deleteById(deckId: String, cardId: String): Int
+
+    @Query("DELETE FROM user_cards WHERE deckId = :deckId")
+    suspend fun deleteByDeckId(deckId: String): Int
 }

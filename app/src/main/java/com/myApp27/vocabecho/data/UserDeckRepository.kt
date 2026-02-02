@@ -113,4 +113,19 @@ class UserDeckRepository(
         statsDao?.deleteByCardId(cardId)
         return rowsDeleted == 1
     }
+
+    /**
+     * Delete a deck and all its cards, progress, and stats.
+     * @return true if delete succeeded
+     */
+    suspend fun deleteDeck(deckId: String): Boolean {
+        // Delete all cards for this deck
+        cardDao.deleteByDeckId(deckId)
+        // Clean up progress and stats (if DAOs are provided)
+        progressDao?.deleteByDeckId(deckId)
+        statsDao?.deleteByDeckId(deckId)
+        // Delete the deck itself
+        val rowsDeleted = deckDao.deleteById(deckId)
+        return rowsDeleted == 1
+    }
 }

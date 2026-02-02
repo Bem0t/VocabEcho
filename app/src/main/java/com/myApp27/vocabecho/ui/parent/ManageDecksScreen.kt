@@ -32,6 +32,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.Deck
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -56,6 +58,31 @@ fun ManageDecksScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    // Delete confirmation dialog
+    if (state.showDeleteConfirmForDeckId != null) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isDeleting) vm.cancelDelete() },
+            title = { Text("Удалить колоду?") },
+            text = { Text("Будут удалены все карточки и прогресс.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { vm.confirmDelete() },
+                    enabled = !state.isDeleting
+                ) {
+                    Text(if (state.isDeleting) "Удаление..." else "Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { vm.cancelDelete() },
+                    enabled = !state.isDeleting
+                ) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -111,7 +138,18 @@ fun ManageDecksScreen(
                             DeckListItem(
                                 deck = deck,
                                 context = context,
-                                onClick = { onOpenDeck(deck.id) }
+                                onClick = { onOpenDeck(deck.id) },
+                                onDelete = { vm.requestDelete(deck.id) }
+                            )
+                        }
+
+                        // Error message
+                        state.errorMessage?.let { error ->
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = error,
+                                color = Color(0xFFCC3333),
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -129,19 +167,27 @@ fun ManageDecksScreen(
 private fun DeckListItem(
     deck: Deck,
     context: android.content.Context,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val imageBitmap = rememberBitmapFromUri(deck.imageUri, context)
+    val interactionSource = rememberPressInteraction()
 
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF4EEF8)),
-        modifier = Modifier.clickableNoRipple(onClick)
+        modifier = Modifier
+            .pressScale(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Thumbnail or title placeholder
@@ -184,6 +230,17 @@ private fun DeckListItem(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+
+            TextButton(
+                onClick = onDelete,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "Удалить",
+                    color = Color(0xFFCC3333),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
@@ -206,6 +263,7 @@ private fun HeaderPill(text: String) {
 
 @Composable
 private fun BackPill(text: String, onClick: () -> Unit) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0x66FFFFFF)),
@@ -213,8 +271,13 @@ private fun BackPill(text: String, onClick: () -> Unit) {
             .widthIn(max = 220.dp)
             .fillMaxWidth(0.6f)
             .height(46.dp)
+            .pressScale(interactionSource)
             .shadow(8.dp, RoundedCornerShape(18.dp))
-            .clickableNoRipple(onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(

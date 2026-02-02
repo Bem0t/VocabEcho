@@ -29,6 +29,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.Card
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
 @Composable
 fun ManageDeckCardsScreen(
@@ -57,6 +59,31 @@ fun ManageDeckCardsScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    // Delete confirmation dialog
+    if (state.showDeleteConfirmForCardId != null) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isDeleting) vm.cancelDelete() },
+            title = { Text("Удалить карточку?") },
+            text = { Text("Карточка будет удалена без возможности восстановления.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { vm.confirmDelete() },
+                    enabled = !state.isDeleting
+                ) {
+                    Text(if (state.isDeleting) "Удаление..." else "Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { vm.cancelDelete() },
+                    enabled = !state.isDeleting
+                ) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -95,7 +122,7 @@ fun ManageDeckCardsScreen(
                 } else if (state.cards.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Нет карточек",
+                            text = "В колоде нет карточек",
                             color = Color(0xFF666666),
                             textAlign = TextAlign.Center
                         )
@@ -112,7 +139,18 @@ fun ManageDeckCardsScreen(
                             CardListItem(
                                 index = index + 1,
                                 card = card,
-                                onClick = { onEditCard(card.id) }
+                                onClick = { onEditCard(card.id) },
+                                onDelete = { vm.requestDelete(card.id) }
+                            )
+                        }
+
+                        // Error message
+                        state.errorMessage?.let { error ->
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = error,
+                                color = Color(0xFFCC3333),
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -130,33 +168,54 @@ fun ManageDeckCardsScreen(
 private fun CardListItem(
     index: Int,
     card: Card,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF4EEF8)),
-        modifier = Modifier.clickableNoRipple(onClick)
+        modifier = Modifier
+            .pressScale(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "$index. ${card.front}",
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0B4AA2),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = card.back,
-                color = Color(0xFF666666),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$index. ${card.front}",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0B4AA2),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = card.back,
+                    color = Color(0xFF666666),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            TextButton(
+                onClick = onDelete,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "Удалить",
+                    color = Color(0xFFCC3333),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
@@ -181,6 +240,7 @@ private fun HeaderPill(text: String) {
 
 @Composable
 private fun BackPill(text: String, onClick: () -> Unit) {
+    val interactionSource = rememberPressInteraction()
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0x66FFFFFF)),
@@ -188,8 +248,13 @@ private fun BackPill(text: String, onClick: () -> Unit) {
             .widthIn(max = 220.dp)
             .fillMaxWidth(0.6f)
             .height(46.dp)
+            .pressScale(interactionSource)
             .shadow(8.dp, RoundedCornerShape(18.dp))
-            .clickableNoRipple(onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(

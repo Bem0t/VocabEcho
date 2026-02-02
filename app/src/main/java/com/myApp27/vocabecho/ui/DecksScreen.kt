@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.Deck
+import com.myApp27.vocabecho.ui.components.pressScale
+import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import com.myApp27.vocabecho.ui.decks.DecksViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -233,6 +235,7 @@ private fun DeckTile(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(18.dp)
+    val interactionSource = rememberPressInteraction()
 
     // Load image from URI for user decks
     val userImageBitmap = if (!ui.isBuiltIn && ui.imageUri != null) {
@@ -241,14 +244,19 @@ private fun DeckTile(
         null
     }
 
-    // Белая рамка + тень
+    // Белая рамка + тень + press scale
     Box(
         modifier = modifier
             .height(140.dp)
+            .pressScale(interactionSource)
             .shadow(10.dp, shape)
             .background(Color.White, shape)
             .padding(3.dp)
-            .clickable { onClick() }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Card(
             shape = shape,
@@ -358,16 +366,22 @@ private fun ParentsButton(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(26.dp)
+    val interactionSource = rememberPressInteraction()
 
-    // Белая рамка + тень, как у плиток, но сильнее
+    // Белая рамка + тень + press scale
     Box(
         modifier = Modifier
             .fillMaxWidth(0.85f)
             .height(60.dp)
+            .pressScale(interactionSource)
             .shadow(14.dp, shape)
             .background(Color.White, shape)
             .padding(4.dp)
-            .clickable { onClick() }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Card(
             shape = shape,
