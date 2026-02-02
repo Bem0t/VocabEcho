@@ -29,4 +29,7 @@ interface CardProgressDao {
     // Количество карточек, повторённых сегодня
     @Query("SELECT COUNT(*) FROM card_progress WHERE deckId = :deckId AND lastReviewedEpochDay = :todayEpochDay")
     suspend fun countReviewedToday(deckId: String, todayEpochDay: Long): Int
+
+    @Query("DELETE FROM card_progress WHERE cardId = :cardId")
+    suspend fun deleteByCardId(cardId: String): Int
 }

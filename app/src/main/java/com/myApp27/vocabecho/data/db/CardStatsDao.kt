@@ -13,4 +13,7 @@ interface CardStatsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: CardStatsEntity)
+
+    @Query("DELETE FROM card_stats WHERE cardId = :cardId")
+    suspend fun deleteByCardId(cardId: String): Int
 }

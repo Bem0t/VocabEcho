@@ -1,5 +1,7 @@
 package com.myApp27.vocabecho.data
 
+import com.myApp27.vocabecho.data.db.CardProgressDao
+import com.myApp27.vocabecho.data.db.CardStatsDao
 import com.myApp27.vocabecho.data.db.UserCardDao
 import com.myApp27.vocabecho.data.db.UserCardEntity
 import com.myApp27.vocabecho.data.db.UserDeckDao
@@ -11,7 +13,9 @@ import java.util.UUID
 
 class UserDeckRepository(
     private val deckDao: UserDeckDao,
-    private val cardDao: UserCardDao
+    private val cardDao: UserCardDao,
+    private val progressDao: CardProgressDao? = null,
+    private val statsDao: CardStatsDao? = null
 ) {
     /**
      * Create a new deck with cards.
@@ -96,5 +100,17 @@ class UserDeckRepository(
     suspend fun updateCard(deckId: String, cardId: String, front: String, back: String): Boolean {
         val rowsUpdated = cardDao.updateText(deckId, cardId, front.trim(), back.trim())
         return rowsUpdated == 1
+    }
+
+    /**
+     * Delete a card and its related progress/stats.
+     * @return true if delete succeeded
+     */
+    suspend fun deleteCard(deckId: String, cardId: String): Boolean {
+        val rowsDeleted = cardDao.deleteById(deckId, cardId)
+        // Clean up progress and stats (if DAOs are provided)
+        progressDao?.deleteByCardId(cardId)
+        statsDao?.deleteByCardId(cardId)
+        return rowsDeleted == 1
     }
 }
