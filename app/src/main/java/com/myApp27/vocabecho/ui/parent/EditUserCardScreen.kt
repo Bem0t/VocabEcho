@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -25,6 +26,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
@@ -96,35 +98,110 @@ fun EditUserCardScreen(
                                 .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            // Card type selector
                             Text(
-                                text = "Лицевая сторона",
+                                text = "Тип карточки",
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF0B4AA2)
                             )
-                            OutlinedTextField(
-                                value = state.front,
-                                onValueChange = { vm.onFrontChanged(it) },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Слово") },
-                                shape = RoundedCornerShape(12.dp)
+
+                            CardTypeSelector(
+                                selectedType = state.selectedType,
+                                onTypeSelected = { vm.onTypeChanged(it) }
                             )
 
-                            Spacer(Modifier.height(8.dp))
-
+                            // Type description
                             Text(
-                                text = "Оборотная сторона",
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0B4AA2)
+                                text = cardTypeDescription(state.selectedType),
+                                color = Color(0xFF666666),
+                                style = MaterialTheme.typography.bodySmall
                             )
-                            OutlinedTextField(
-                                value = state.back,
-                                onValueChange = { vm.onBackChanged(it) },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Перевод") },
-                                shape = RoundedCornerShape(12.dp)
-                            )
+
+                            Spacer(Modifier.height(4.dp))
+
+                            // Dynamic form fields based on card type
+                            when (state.selectedType) {
+                                CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                                    Text(
+                                        text = "Лицевая сторона",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0B4AA2)
+                                    )
+                                    OutlinedTextField(
+                                        value = state.front,
+                                        onValueChange = { vm.onFrontChanged(it) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = { Text("Слово") },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Оборотная сторона",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0B4AA2)
+                                    )
+                                    OutlinedTextField(
+                                        value = state.back,
+                                        onValueChange = { vm.onBackChanged(it) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = { Text("Перевод") },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+
+                                CardType.CLOZE -> {
+                                    Text(
+                                        text = "Текст предложения",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0B4AA2)
+                                    )
+                                    OutlinedTextField(
+                                        value = state.clozeText,
+                                        onValueChange = { vm.onClozeTextChanged(it) },
+                                        singleLine = false,
+                                        maxLines = 3,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = { Text("The capital of France is Paris.") },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Скрываемое слово/фраза",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0B4AA2)
+                                    )
+                                    OutlinedTextField(
+                                        value = state.clozeAnswer,
+                                        onValueChange = { vm.onClozeAnswerChanged(it) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = { Text("Paris") },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Подсказка (необязательно)",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0B4AA2)
+                                    )
+                                    OutlinedTextField(
+                                        value = state.clozeHint,
+                                        onValueChange = { vm.onClozeHintChanged(it) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = { Text("город") },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+                            }
 
                             // Error message
                             state.errorMessage?.let { error ->
@@ -156,7 +233,12 @@ fun EditUserCardScreen(
                         onClick = onBack
                     )
 
-                    val canSave = state.front.isNotBlank() && state.back.isNotBlank() && !state.isSaving
+                    val canSave = when (state.selectedType) {
+                        CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED ->
+                            state.front.isNotBlank() && state.back.isNotBlank() && !state.isSaving
+                        CardType.CLOZE ->
+                            state.clozeText.isNotBlank() && state.clozeAnswer.isNotBlank() && !state.isSaving
+                    }
                     ActionButton(
                         text = if (state.isSaving) "Сохранение..." else "Сохранить",
                         background = if (canSave) Color(0xFF3B87D9) else Color(0xFFAAAAAA),
@@ -278,4 +360,65 @@ class EditUserCardViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return EditUserCardViewModel(app, deckId, cardId) as T
     }
+}
+
+/**
+ * Card type selector with segmented button style.
+ */
+@Composable
+private fun CardTypeSelector(
+    selectedType: CardType,
+    onTypeSelected: (CardType) -> Unit
+) {
+    val types = listOf(
+        CardType.BASIC to "BASIC",
+        CardType.BASIC_REVERSED to "x2",
+        CardType.BASIC_TYPED to "TYPED",
+        CardType.CLOZE to "CLOZE"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFFE8E4F0)),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        types.forEach { (type, label) ->
+            val isSelected = selectedType == type
+            val interactionSource = rememberPressInteraction()
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .pressScale(interactionSource)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) Color(0xFF3B87D9) else Color.Transparent)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onTypeSelected(type) }
+                    )
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (isSelected) Color.White else Color(0xFF0B4AA2),
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Returns a short description for each card type.
+ */
+private fun cardTypeDescription(type: CardType): String = when (type) {
+    CardType.BASIC -> "Показывает лицевую сторону, затем правильный ответ."
+    CardType.BASIC_REVERSED -> "Две карточки: туда и обратно (вопрос/ответ меняются местами)."
+    CardType.BASIC_TYPED -> "Нужно ввести ответ текстом, затем сравнить с правильным."
+    CardType.CLOZE -> "Пропуск в предложении: нужно вписать скрытое слово/фразу."
 }

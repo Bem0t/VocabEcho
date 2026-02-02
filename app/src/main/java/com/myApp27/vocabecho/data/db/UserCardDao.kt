@@ -20,6 +20,27 @@ interface UserCardDao {
     @Query("UPDATE user_cards SET front = :front, back = :back WHERE id = :cardId AND deckId = :deckId")
     suspend fun updateText(deckId: String, cardId: String, front: String, back: String): Int
 
+    @Query("""
+        UPDATE user_cards
+        SET type = :type,
+            front = :front,
+            back = :back,
+            clozeText = :clozeText,
+            clozeAnswer = :clozeAnswer,
+            clozeHint = :clozeHint
+        WHERE id = :cardId AND deckId = :deckId
+    """)
+    suspend fun updateCardFull(
+        deckId: String,
+        cardId: String,
+        type: String?,
+        front: String,
+        back: String,
+        clozeText: String?,
+        clozeAnswer: String?,
+        clozeHint: String?
+    ): Int
+
     @Query("DELETE FROM user_cards WHERE id = :cardId AND deckId = :deckId")
     suspend fun deleteById(deckId: String, cardId: String): Int
 

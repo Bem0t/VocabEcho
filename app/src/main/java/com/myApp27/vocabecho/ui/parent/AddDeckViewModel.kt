@@ -29,10 +29,27 @@ data class DraftCard(
     fun displayText(): String {
         return when (type) {
             CardType.CLOZE -> {
-                val question = clozeText?.replace(clozeAnswer ?: "", "[...]") ?: ""
-                question
+                // Case-insensitive, first occurrence only
+                val text = clozeText ?: ""
+                val answer = clozeAnswer ?: ""
+                if (answer.isNotBlank()) {
+                    replaceFirstIgnoreCase(text, answer, "[...]")
+                } else {
+                    text
+                }
             }
             else -> "$front — $back"
+        }
+    }
+
+    companion object {
+        /**
+         * Replace first occurrence of target in text, ignoring case.
+         */
+        private fun replaceFirstIgnoreCase(text: String, target: String, replacement: String): String {
+            val idx = text.indexOf(target, ignoreCase = true)
+            if (idx < 0) return text
+            return text.substring(0, idx) + replacement + text.substring(idx + target.length)
         }
     }
 
@@ -153,7 +170,8 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
                     _state.value = _state.value.copy(inputError = "Введите скрываемое слово/фразу")
                     return
                 }
-                if (!clozeText.contains(clozeAnswer)) {
+                // Case-insensitive check
+                if (!clozeText.contains(clozeAnswer, ignoreCase = true)) {
                     _state.value = _state.value.copy(inputError = "Скрываемое слово не найдено в тексте")
                     return
                 }

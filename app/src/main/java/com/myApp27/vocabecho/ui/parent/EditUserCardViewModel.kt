@@ -5,13 +5,22 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.myApp27.vocabecho.data.UserDeckRepository
 import com.myApp27.vocabecho.data.db.DatabaseProvider
+import com.myApp27.vocabecho.domain.model.CardType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 data class EditUserCardUiState(
+    // Card type
+    val selectedType: CardType = CardType.BASIC,
+    // Fields for BASIC / BASIC_REVERSED / BASIC_TYPED
     val front: String = "",
     val back: String = "",
+    // Fields for CLOZE
+    val clozeText: String = "",
+    val clozeAnswer: String = "",
+    val clozeHint: String = "",
+    // UI state
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val notFound: Boolean = false,
@@ -37,18 +46,64 @@ class EditUserCardViewModel(
     private fun load() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
-            val card = userRepo.getCard(deckId, cardId)
-            if (card != null) {
-                _state.value = EditUserCardUiState(
-                    front = card.front,
-                    back = card.back,
-                    isLoading = false,
-                    notFound = false
-                )
+            val entity = userRepo.getCardEntity(deckId, cardId)
+            if (entity != null) {
+                val type = CardType.fromString(entity.type)
+                _state.value = when (type) {
+                    CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                        EditUserCardUiState(
+                            selectedType = type,
+                            front = entity.front,
+                            back = entity.back,
+                            clozeText = "",
+                            clozeAnswer = "",
+                            clozeHint = "",
+                            isLoading = false,
+                            notFound = false
+                        )
+                    }
+                    CardType.CLOZE -> {
+                        EditUserCardUiState(
+                            selectedType = CardType.CLOZE,
+                            front = "",
+                            back = "",
+                            clozeText = entity.clozeText ?: "",
+                            clozeAnswer = entity.clozeAnswer ?: "",
+                            clozeHint = entity.clozeHint ?: "",
+                            isLoading = false,
+                            notFound = false
+                        )
+                    }
+                }
             } else {
                 _state.value = EditUserCardUiState(
                     isLoading = false,
                     notFound = true
+                )
+            }
+        }
+    }
+
+    fun onTypeChanged(type: CardType) {
+        val current = _state.value
+        _state.value = when (type) {
+            CardType.CLOZE -> {
+                // Switching to CLOZE: clear front/back, keep cloze fields
+                current.copy(
+                    selectedType = type,
+                    front = "",
+                    back = "",
+                    errorMessage = null
+                )
+            }
+            else -> {
+                // Switching away from CLOZE: clear cloze fields, keep front/back
+                current.copy(
+                    selectedType = type,
+                    clozeText = "",
+                    clozeAnswer = "",
+                    clozeHint = "",
+                    errorMessage = null
                 )
             }
         }
@@ -62,24 +117,70 @@ class EditUserCardViewModel(
         _state.value = _state.value.copy(back = value, errorMessage = null)
     }
 
-    fun save(onSuccess: () -> Unit) {
-        val front = _state.value.front.trim()
-        val back = _state.value.back.trim()
+    fun onClozeTextChanged(value: String) {
+        _state.value = _state.value.copy(clozeText = value, errorMessage = null)
+    }
 
-        if (front.isBlank()) {
-            _state.value = _state.value.copy(errorMessage = "Введите лицевую сторону")
-            return
-        }
-        if (back.isBlank()) {
-            _state.value = _state.value.copy(errorMessage = "Введите оборотную сторону")
-            return
+    fun onClozeAnswerChanged(value: String) {
+        _state.value = _state.value.copy(clozeAnswer = value, errorMessage = null)
+    }
+
+    fun onClozeHintChanged(value: String) {
+        _state.value = _state.value.copy(clozeHint = value, errorMessage = null)
+    }
+
+    fun save(onSuccess: () -> Unit) {
+        val type = _state.value.selectedType
+
+        // Validate based on type
+        when (type) {
+            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                val front = _state.value.front.trim()
+                val back = _state.value.back.trim()
+
+                if (front.isBlank()) {
+                    _state.value = _state.value.copy(errorMessage = "Введите лицевую сторону")
+                    return
+                }
+                if (back.isBlank()) {
+                    _state.value = _state.value.copy(errorMessage = "Введите оборотную сторону")
+                    return
+                }
+            }
+            CardType.CLOZE -> {
+                val clozeText = _state.value.clozeText.trim()
+                val clozeAnswer = _state.value.clozeAnswer.trim()
+
+                if (clozeText.isBlank()) {
+                    _state.value = _state.value.copy(errorMessage = "Введите текст предложения")
+                    return
+                }
+                if (clozeAnswer.isBlank()) {
+                    _state.value = _state.value.copy(errorMessage = "Введите скрываемое слово/фразу")
+                    return
+                }
+                // Case-insensitive check
+                if (!clozeText.contains(clozeAnswer, ignoreCase = true)) {
+                    _state.value = _state.value.copy(errorMessage = "Скрываемое слово не найдено в тексте")
+                    return
+                }
+            }
         }
 
         _state.value = _state.value.copy(isSaving = true, errorMessage = null)
 
         viewModelScope.launch {
             try {
-                val success = userRepo.updateCard(deckId, cardId, front, back)
+                val success = userRepo.updateCardFull(
+                    deckId = deckId,
+                    cardId = cardId,
+                    type = type,
+                    front = _state.value.front,
+                    back = _state.value.back,
+                    clozeText = _state.value.clozeText.ifBlank { null },
+                    clozeAnswer = _state.value.clozeAnswer.ifBlank { null },
+                    clozeHint = _state.value.clozeHint.ifBlank { null }
+                )
                 if (success) {
                     _state.value = _state.value.copy(isSaving = false, savedSuccessfully = true)
                     onSuccess()

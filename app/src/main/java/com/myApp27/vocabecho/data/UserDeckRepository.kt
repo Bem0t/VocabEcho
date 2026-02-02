@@ -175,11 +175,22 @@ class UserDeckRepository(
                     } else {
                         "[...]"
                     }
-                    val questionText = clozeText.replace(clozeAnswer, placeholder, ignoreCase = false)
+                    // Case-insensitive, first occurrence only
+                    val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
                     Card(id = entity.id, front = questionText, back = clozeAnswer)
                 }
             }
         }
+    }
+
+    /**
+     * Replace first occurrence of target in text, ignoring case.
+     * Returns original text if target not found.
+     */
+    private fun replaceFirstIgnoreCase(text: String, target: String, replacement: String): String {
+        val idx = text.indexOf(target, ignoreCase = true)
+        if (idx < 0) return text
+        return text.substring(0, idx) + replacement + text.substring(idx + target.length)
     }
 
     /**
@@ -192,11 +203,69 @@ class UserDeckRepository(
     }
 
     /**
-     * Update card front and back text.
+     * Get a single card entity by ID (raw, with all fields).
+     * Useful for editing cards.
+     */
+    suspend fun getCardEntity(deckId: String, cardId: String): UserCardEntity? {
+        return cardDao.getById(deckId, cardId)
+    }
+
+    /**
+     * Update card front and back text (legacy method).
      * @return true if update succeeded
      */
     suspend fun updateCard(deckId: String, cardId: String, front: String, back: String): Boolean {
         val rowsUpdated = cardDao.updateText(deckId, cardId, front.trim(), back.trim())
+        return rowsUpdated == 1
+    }
+
+    /**
+     * Update card with full type and field support.
+     * @return true if update succeeded
+     */
+    suspend fun updateCardFull(
+        deckId: String,
+        cardId: String,
+        type: CardType,
+        front: String,
+        back: String,
+        clozeText: String?,
+        clozeAnswer: String?,
+        clozeHint: String?
+    ): Boolean {
+        val actualFront: String
+        val actualBack: String
+        val actualClozeText: String?
+        val actualClozeAnswer: String?
+        val actualClozeHint: String?
+
+        when (type) {
+            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                actualFront = front.trim()
+                actualBack = back.trim()
+                actualClozeText = null
+                actualClozeAnswer = null
+                actualClozeHint = null
+            }
+            CardType.CLOZE -> {
+                actualFront = ""
+                actualBack = ""
+                actualClozeText = clozeText?.trim()
+                actualClozeAnswer = clozeAnswer?.trim()
+                actualClozeHint = clozeHint?.trim()?.ifBlank { null }
+            }
+        }
+
+        val rowsUpdated = cardDao.updateCardFull(
+            deckId = deckId,
+            cardId = cardId,
+            type = type.name,
+            front = actualFront,
+            back = actualBack,
+            clozeText = actualClozeText,
+            clozeAnswer = actualClozeAnswer,
+            clozeHint = actualClozeHint
+        )
         return rowsUpdated == 1
     }
 

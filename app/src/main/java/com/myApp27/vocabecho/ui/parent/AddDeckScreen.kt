@@ -154,7 +154,14 @@ fun AddDeckScreen(
                         onTypeSelected = { vm.onCardTypeChanged(it) }
                     )
 
-                    Spacer(Modifier.height(8.dp))
+                    // Type description
+                    Text(
+                        text = cardTypeDescription(state.selectedCardType),
+                        color = Color(0xFF666666),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Spacer(Modifier.height(4.dp))
 
                     // Dynamic form fields based on card type
                     when (state.selectedCardType) {
@@ -537,4 +544,14 @@ private fun DraftCardItem(
             }
         }
     }
+}
+
+/**
+ * Returns a short description for each card type.
+ */
+private fun cardTypeDescription(type: CardType): String = when (type) {
+    CardType.BASIC -> "Показывает лицевую сторону, затем правильный ответ."
+    CardType.BASIC_REVERSED -> "Две карточки: туда и обратно (вопрос/ответ меняются местами)."
+    CardType.BASIC_TYPED -> "Нужно ввести ответ текстом, затем сравнить с правильным."
+    CardType.CLOZE -> "Пропуск в предложении: нужно вписать скрытое слово/фразу."
 }

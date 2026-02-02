@@ -94,13 +94,13 @@ object CardInstanceGenerator {
                     )
                 }
 
-                // Generate question with placeholder
+                // Generate question with placeholder (case-insensitive, first occurrence only)
                 val placeholder = if (!entity.clozeHint.isNullOrBlank()) {
                     "[${entity.clozeHint}]"
                 } else {
                     "[...]"
                 }
-                val questionText = clozeText.replace(clozeAnswer, placeholder, ignoreCase = false)
+                val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
 
                 listOf(
                     CardInstance(
@@ -140,5 +140,15 @@ object CardInstanceGenerator {
             expectsTyping = false,
             direction = null
         )
+    }
+
+    /**
+     * Replace first occurrence of target in text, ignoring case.
+     * Returns original text if target not found.
+     */
+    private fun replaceFirstIgnoreCase(text: String, target: String, replacement: String): String {
+        val idx = text.indexOf(target, ignoreCase = true)
+        if (idx < 0) return text
+        return text.substring(0, idx) + replacement + text.substring(idx + target.length)
     }
 }
