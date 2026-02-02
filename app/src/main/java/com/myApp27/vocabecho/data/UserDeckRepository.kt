@@ -7,6 +7,8 @@ import com.myApp27.vocabecho.data.db.UserCardEntity
 import com.myApp27.vocabecho.data.db.UserDeckDao
 import com.myApp27.vocabecho.data.db.UserDeckEntity
 import com.myApp27.vocabecho.domain.model.Card
+import com.myApp27.vocabecho.domain.model.CardInstance
+import com.myApp27.vocabecho.domain.model.CardInstanceGenerator
 import com.myApp27.vocabecho.domain.model.Deck
 import com.myApp27.vocabecho.domain.time.TimeProvider
 import java.util.UUID
@@ -127,5 +129,28 @@ class UserDeckRepository(
         // Delete the deck itself
         val rowsDeleted = deckDao.deleteById(deckId)
         return rowsDeleted == 1
+    }
+
+    // ========== CardInstance support for Anki-like card types ==========
+
+    /**
+     * Load CardInstances for a deck.
+     * Generates instances based on card type (BASIC, BASIC_REVERSED, etc.)
+     * 
+     * Note: For BASIC_REVERSED, generates 2 instances per card.
+     * Progress is currently tracked per noteId, not per instanceId.
+     * TODO: Implement instance-level progress tracking in future increment.
+     */
+    suspend fun loadCardInstances(deckId: String): List<CardInstance> {
+        val cardEntities = cardDao.getByDeckId(deckId)
+        return CardInstanceGenerator.generateAll(cardEntities)
+    }
+
+    /**
+     * Load raw card entities for a deck.
+     * Useful when you need the original entity data.
+     */
+    suspend fun loadCardEntities(deckId: String): List<UserCardEntity> {
+        return cardDao.getByDeckId(deckId)
     }
 }

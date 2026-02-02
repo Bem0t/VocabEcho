@@ -51,6 +51,22 @@ object DatabaseProvider {
         }
     }
 
+    /**
+     * Migration 4->5: Add card type support for Anki-like card modes.
+     * Adds columns: type, clozeText, clozeAnswer, clozeHint
+     * Existing cards default to BASIC type.
+     */
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add type column with default BASIC for existing rows
+            db.execSQL("ALTER TABLE user_cards ADD COLUMN type TEXT DEFAULT 'BASIC'")
+            // Add cloze-related columns (nullable)
+            db.execSQL("ALTER TABLE user_cards ADD COLUMN clozeText TEXT")
+            db.execSQL("ALTER TABLE user_cards ADD COLUMN clozeAnswer TEXT")
+            db.execSQL("ALTER TABLE user_cards ADD COLUMN clozeHint TEXT")
+        }
+    }
+
     fun get(context: Context): AppDatabase =
         db ?: synchronized(this) {
             db ?: Room.databaseBuilder(
@@ -58,7 +74,7 @@ object DatabaseProvider {
                 AppDatabase::class.java,
                 "app.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 .also { db = it }
         }
