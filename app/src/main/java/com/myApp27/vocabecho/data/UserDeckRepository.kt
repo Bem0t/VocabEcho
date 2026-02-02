@@ -9,8 +9,10 @@ import com.myApp27.vocabecho.data.db.UserDeckEntity
 import com.myApp27.vocabecho.domain.model.Card
 import com.myApp27.vocabecho.domain.model.CardInstance
 import com.myApp27.vocabecho.domain.model.CardInstanceGenerator
+import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.domain.model.Deck
 import com.myApp27.vocabecho.domain.time.TimeProvider
+import com.myApp27.vocabecho.ui.parent.DraftCard
 import java.util.UUID
 
 class UserDeckRepository(
@@ -20,7 +22,7 @@ class UserDeckRepository(
     private val statsDao: CardStatsDao? = null
 ) {
     /**
-     * Create a new deck with cards.
+     * Create a new deck with cards (legacy method for simple front/back pairs).
      * @param title Deck title
      * @param imageUri Optional cover image URI
      * @param cards List of (front, back) pairs
@@ -48,7 +50,8 @@ class UserDeckRepository(
                 deckId = deckId,
                 front = front.trim(),
                 back = back.trim(),
-                createdAtEpochDay = today
+                createdAtEpochDay = today,
+                type = CardType.BASIC.name
             )
         }
         cardDao.insertAll(cardEntities)
@@ -57,7 +60,66 @@ class UserDeckRepository(
     }
 
     /**
+     * Create a new deck with draft cards supporting all card types.
+     * @param title Deck title
+     * @param imageUri Optional cover image URI
+     * @param draftCards List of DraftCard with type and fields
+     * @return The created deck's ID
+     */
+    suspend fun createDeckWithDraftCards(
+        title: String,
+        imageUri: String?,
+        draftCards: List<DraftCard>
+    ): String {
+        val today = TimeProvider.todayEpochDay()
+        val deckId = UUID.randomUUID().toString()
+
+        val deckEntity = UserDeckEntity(
+            id = deckId,
+            title = title.trim(),
+            createdAtEpochDay = today,
+            imageUri = imageUri
+        )
+        deckDao.insert(deckEntity)
+
+        val cardEntities = draftCards.mapIndexed { index, draft ->
+            when (draft.type) {
+                CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                    UserCardEntity(
+                        id = "${deckId}_card_$index",
+                        deckId = deckId,
+                        front = draft.front.trim(),
+                        back = draft.back.trim(),
+                        createdAtEpochDay = today,
+                        type = draft.type.name,
+                        clozeText = null,
+                        clozeAnswer = null,
+                        clozeHint = null
+                    )
+                }
+                CardType.CLOZE -> {
+                    UserCardEntity(
+                        id = "${deckId}_card_$index",
+                        deckId = deckId,
+                        front = "", // Not used for CLOZE
+                        back = "",  // Not used for CLOZE
+                        createdAtEpochDay = today,
+                        type = CardType.CLOZE.name,
+                        clozeText = draft.clozeText?.trim(),
+                        clozeAnswer = draft.clozeAnswer?.trim(),
+                        clozeHint = draft.clozeHint?.trim()
+                    )
+                }
+            }
+        }
+        cardDao.insertAll(cardEntities)
+
+        return deckId
+    }
+
+    /**
      * Load a single deck by ID.
+     * Cards are converted to Card model with proper question/answer based on type.
      */
     suspend fun loadDeck(deckId: String): Deck? {
         val deckEntity = deckDao.getById(deckId) ?: return null
@@ -66,7 +128,7 @@ class UserDeckRepository(
         return Deck(
             id = deckEntity.id,
             title = deckEntity.title,
-            cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) },
+            cards = cardEntities.map { entityToCard(it) },
             imageUri = deckEntity.imageUri
         )
     }
@@ -81,18 +143,52 @@ class UserDeckRepository(
             Deck(
                 id = deckEntity.id,
                 title = deckEntity.title,
-                cards = cardEntities.map { Card(id = it.id, front = it.front, back = it.back) },
+                cards = cardEntities.map { entityToCard(it) },
                 imageUri = deckEntity.imageUri
             )
         }
     }
 
     /**
+     * Convert UserCardEntity to Card model with proper question/answer based on type.
+     * This ensures all card types work in the learn flow.
+     */
+    private fun entityToCard(entity: UserCardEntity): Card {
+        val type = CardType.fromString(entity.type)
+
+        return when (type) {
+            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                // Use front/back as-is
+                Card(id = entity.id, front = entity.front, back = entity.back)
+            }
+            CardType.CLOZE -> {
+                // Generate question with placeholder, answer is the hidden word
+                val clozeText = entity.clozeText
+                val clozeAnswer = entity.clozeAnswer
+
+                if (clozeText.isNullOrBlank() || clozeAnswer.isNullOrBlank()) {
+                    // Fallback if cloze data is missing
+                    Card(id = entity.id, front = entity.front, back = entity.back)
+                } else {
+                    val placeholder = if (!entity.clozeHint.isNullOrBlank()) {
+                        "[${entity.clozeHint}]"
+                    } else {
+                        "[...]"
+                    }
+                    val questionText = clozeText.replace(clozeAnswer, placeholder, ignoreCase = false)
+                    Card(id = entity.id, front = questionText, back = clozeAnswer)
+                }
+            }
+        }
+    }
+
+    /**
      * Get a single card by ID.
+     * Returns Card with proper question/answer based on type.
      */
     suspend fun getCard(deckId: String, cardId: String): Card? {
         val entity = cardDao.getById(deckId, cardId) ?: return null
-        return Card(id = entity.id, front = entity.front, back = entity.back)
+        return entityToCard(entity)
     }
 
     /**

@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -26,9 +27,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
+import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import kotlinx.coroutines.Dispatchers
@@ -145,25 +148,88 @@ fun AddDeckScreen(
                         color = Color(0xFF0B4AA2)
                     )
 
-                    OutlinedTextField(
-                        value = state.currentFront,
-                        onValueChange = { vm.onFrontChanged(it) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Слово (русский)") },
-                        shape = RoundedCornerShape(12.dp)
+                    // Card type selector
+                    CardTypeSelector(
+                        selectedType = state.selectedCardType,
+                        onTypeSelected = { vm.onCardTypeChanged(it) }
                     )
 
-                    OutlinedTextField(
-                        value = state.currentBack,
-                        onValueChange = { vm.onBackChanged(it) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Перевод (английский)") },
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                    Spacer(Modifier.height(8.dp))
 
-                    val canAddCard = state.currentFront.isNotBlank() && state.currentBack.isNotBlank()
+                    // Dynamic form fields based on card type
+                    when (state.selectedCardType) {
+                        CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                            OutlinedTextField(
+                                value = state.currentFront,
+                                onValueChange = { vm.onFrontChanged(it) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Лицевая сторона") },
+                                placeholder = { Text("Слово (русский)") },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = state.currentBack,
+                                onValueChange = { vm.onBackChanged(it) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Оборотная сторона") },
+                                placeholder = { Text("Перевод (английский)") },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+
+                        CardType.CLOZE -> {
+                            OutlinedTextField(
+                                value = state.currentClozeText,
+                                onValueChange = { vm.onClozeTextChanged(it) },
+                                singleLine = false,
+                                maxLines = 3,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Текст предложения") },
+                                placeholder = { Text("The capital of France is Paris.") },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = state.currentClozeAnswer,
+                                onValueChange = { vm.onClozeAnswerChanged(it) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Скрываемое слово/фраза") },
+                                placeholder = { Text("Paris") },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = state.currentClozeHint,
+                                onValueChange = { vm.onClozeHintChanged(it) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Подсказка (необязательно)") },
+                                placeholder = { Text("город") },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    // Input error message
+                    state.inputError?.let { error ->
+                        Text(
+                            text = error,
+                            color = Color(0xFFCC3333),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    val canAddCard = when (state.selectedCardType) {
+                        CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED ->
+                            state.currentFront.isNotBlank() && state.currentBack.isNotBlank()
+                        CardType.CLOZE ->
+                            state.currentClozeText.isNotBlank() && state.currentClozeAnswer.isNotBlank()
+                    }
+
                     SmallButton(
                         text = "Добавить карточку",
                         background = if (canAddCard) Color(0xFF66B05D) else Color(0xFFAAAAAA),
@@ -172,40 +238,21 @@ fun AddDeckScreen(
                     )
 
                     // Cards list
-                    if (state.cards.isNotEmpty()) {
+                    if (state.draftCards.isNotEmpty()) {
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = "Карточки (${state.cards.size}):",
+                            text = "Карточки (${state.draftCards.size}):",
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0B4AA2)
                         )
 
-                        state.cards.forEachIndexed { index, (front, back) ->
-                            Card(
-                                shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF4EEF8))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${index + 1}. $front — $back",
-                                        modifier = Modifier.weight(1f),
-                                        color = Color(0xFF0B4AA2)
-                                    )
-                                }
-                            }
+                        state.draftCards.forEachIndexed { index, draft ->
+                            DraftCardItem(
+                                index = index + 1,
+                                draft = draft,
+                                onDelete = { vm.removeCard(index) }
+                            )
                         }
-
-                        SmallButton(
-                            text = "Удалить последнюю",
-                            background = Color(0xFFF05A3A),
-                            enabled = true,
-                            onClick = { vm.removeLastCard() }
-                        )
                     }
 
                     // Error message
@@ -234,7 +281,7 @@ fun AddDeckScreen(
                     onClick = onBack
                 )
 
-                val canSave = state.title.isNotBlank() && state.cards.isNotEmpty() && !state.isSaving
+                val canSave = state.title.isNotBlank() && state.draftCards.isNotEmpty() && !state.isSaving
                 ActionButton(
                     text = if (state.isSaving) "Сохранение..." else "Сохранить",
                     background = if (canSave) Color(0xFF3B87D9) else Color(0xFFAAAAAA),
@@ -371,4 +418,123 @@ private fun rememberBitmapFromUri(uriString: String?, context: android.content.C
     }
 
     return bitmap
+}
+
+/**
+ * Card type selector with segmented button style.
+ */
+@Composable
+private fun CardTypeSelector(
+    selectedType: CardType,
+    onTypeSelected: (CardType) -> Unit
+) {
+    val types = listOf(
+        CardType.BASIC to "BASIC",
+        CardType.BASIC_REVERSED to "x2",
+        CardType.BASIC_TYPED to "TYPED",
+        CardType.CLOZE to "CLOZE"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFFE8E4F0)),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        types.forEach { (type, label) ->
+            val isSelected = selectedType == type
+            val interactionSource = rememberPressInteraction()
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .pressScale(interactionSource)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) Color(0xFF3B87D9) else Color.Transparent)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onTypeSelected(type) }
+                    )
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (isSelected) Color.White else Color(0xFF0B4AA2),
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Draft card item in the preview list.
+ */
+@Composable
+private fun DraftCardItem(
+    index: Int,
+    draft: DraftCard,
+    onDelete: () -> Unit
+) {
+    val typeColor = when (draft.type) {
+        CardType.BASIC -> Color(0xFF66B05D)
+        CardType.BASIC_REVERSED -> Color(0xFF9A7DE8)
+        CardType.BASIC_TYPED -> Color(0xFF4FA7E3)
+        CardType.CLOZE -> Color(0xFFF4B63A)
+    }
+
+    Card(
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4EEF8))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, top = 6.dp, bottom = 6.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Type badge
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(typeColor)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = draft.typeLabel(),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.width(8.dp))
+
+            // Card content preview
+            Text(
+                text = "$index. ${draft.displayText()}",
+                modifier = Modifier.weight(1f),
+                color = Color(0xFF0B4AA2),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            // Delete button
+            TextButton(
+                onClick = onDelete,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "Удалить",
+                    color = Color(0xFFCC3333),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
 }
