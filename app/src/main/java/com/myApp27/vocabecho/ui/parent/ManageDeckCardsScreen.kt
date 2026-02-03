@@ -2,6 +2,7 @@ package com.myApp27.vocabecho.ui.parent
 
 import android.app.Application
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -36,7 +37,8 @@ import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 fun ManageDeckCardsScreen(
     deckId: String,
     onBack: () -> Unit,
-    onEditCard: (cardId: String) -> Unit
+    onEditCard: (cardId: String) -> Unit,
+    onAddCard: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val vm: ManageDeckCardsViewModel = viewModel(
@@ -159,7 +161,27 @@ fun ManageDeckCardsScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            BackPill(text = "Назад", onClick = onBack)
+            // Bottom buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ActionPill(
+                    text = "Назад",
+                    background = Color(0x66FFFFFF),
+                    textColor = Color(0xFF0B4AA2),
+                    modifier = Modifier.weight(1f),
+                    onClick = onBack
+                )
+
+                ActionPill(
+                    text = "Добавить карточку",
+                    background = Color(0xFF3B87D9),
+                    textColor = Color.White,
+                    modifier = Modifier.weight(1f),
+                    onClick = onAddCard
+                )
+            }
         }
     }
 }
@@ -239,29 +261,44 @@ private fun HeaderPill(text: String) {
 }
 
 @Composable
-private fun BackPill(text: String, onClick: () -> Unit) {
+private fun ActionPill(
+    text: String,
+    background: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val shapeOuter = RoundedCornerShape(18.dp)
+    val shapeInner = RoundedCornerShape(16.dp)
     val interactionSource = rememberPressInteraction()
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x66FFFFFF)),
-        modifier = Modifier
-            .widthIn(max = 220.dp)
-            .fillMaxWidth(0.6f)
-            .height(46.dp)
+
+    Box(
+        modifier = modifier
+            .height(56.dp)
             .pressScale(interactionSource)
-            .shadow(8.dp, RoundedCornerShape(18.dp))
+            .shadow(12.dp, shapeOuter)
+            .background(Color.White, shapeOuter)
+            .padding(4.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
     ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = text,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF0B4AA2)
-            )
+        Card(
+            shape = shapeInner,
+            colors = CardDefaults.cardColors(containerColor = background),
+            modifier = Modifier.fillMaxSize(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = text,
+                    color = textColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
 }

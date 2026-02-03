@@ -30,14 +30,23 @@ enum class CardType {
     companion object {
         /**
          * Parse type from string, defaulting to BASIC for null/unknown values.
+         * Note: BASIC_REVERSED is mapped to BASIC for backward compatibility.
          */
         fun fromString(value: String?): CardType {
             if (value == null) return BASIC
+            // Map BASIC_REVERSED to BASIC for backward compatibility
+            if (value == "BASIC_REVERSED") return BASIC
             return try {
                 valueOf(value)
             } catch (e: IllegalArgumentException) {
                 BASIC
             }
         }
+
+        /**
+         * Returns only the types that should be shown in UI selectors.
+         * BASIC_REVERSED is excluded as it's deprecated.
+         */
+        fun selectableTypes(): List<CardType> = listOf(BASIC, BASIC_TYPED, CLOZE)
     }
 }

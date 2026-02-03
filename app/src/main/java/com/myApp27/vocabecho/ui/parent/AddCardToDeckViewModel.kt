@@ -2,6 +2,8 @@ package com.myApp27.vocabecho.ui.parent
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.myApp27.vocabecho.data.UserDeckRepository
 import com.myApp27.vocabecho.data.db.DatabaseProvider
@@ -10,10 +12,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-data class EditUserCardUiState(
-    // Card type
+data class AddCardToDeckUiState(
     val selectedType: CardType = CardType.BASIC,
-    // Fields for BASIC / BASIC_REVERSED / BASIC_TYPED
+    // Fields for BASIC / BASIC_TYPED
     val front: String = "",
     val back: String = "",
     // Fields for CLOZE
@@ -21,89 +22,25 @@ data class EditUserCardUiState(
     val clozeAnswer: String = "",
     val clozeHint: String = "",
     // UI state
-    val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    val notFound: Boolean = false,
     val savedSuccessfully: Boolean = false,
     val errorMessage: String? = null
 )
 
-class EditUserCardViewModel(
+class AddCardToDeckViewModel(
     app: Application,
-    private val deckId: String,
-    private val cardId: String
+    private val deckId: String
 ) : AndroidViewModel(app) {
     private val db = DatabaseProvider.get(app.applicationContext)
     private val userRepo = UserDeckRepository(db.userDeckDao(), db.userCardDao())
 
-    private val _state = MutableStateFlow(EditUserCardUiState())
-    val state: StateFlow<EditUserCardUiState> = _state
-
-    init {
-        load()
-    }
-
-    private fun load() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            val entity = userRepo.getCardEntity(deckId, cardId)
-            if (entity != null) {
-                val type = CardType.fromString(entity.type)
-                // Map BASIC_REVERSED to BASIC for editing
-                val displayType = if (type == CardType.BASIC_REVERSED) CardType.BASIC else type
-                _state.value = when (displayType) {
-                    CardType.BASIC, CardType.BASIC_TYPED -> {
-                        EditUserCardUiState(
-                            selectedType = displayType,
-                            front = entity.front,
-                            back = entity.back,
-                            clozeText = "",
-                            clozeAnswer = "",
-                            clozeHint = "",
-                            isLoading = false,
-                            notFound = false
-                        )
-                    }
-                    CardType.CLOZE -> {
-                        EditUserCardUiState(
-                            selectedType = CardType.CLOZE,
-                            front = "",
-                            back = "",
-                            clozeText = entity.clozeText ?: "",
-                            clozeAnswer = entity.clozeAnswer ?: "",
-                            clozeHint = entity.clozeHint ?: "",
-                            isLoading = false,
-                            notFound = false
-                        )
-                    }
-                    // BASIC_REVERSED handled above, but keep for exhaustive when
-                    CardType.BASIC_REVERSED -> {
-                        EditUserCardUiState(
-                            selectedType = CardType.BASIC,
-                            front = entity.front,
-                            back = entity.back,
-                            clozeText = "",
-                            clozeAnswer = "",
-                            clozeHint = "",
-                            isLoading = false,
-                            notFound = false
-                        )
-                    }
-                }
-            } else {
-                _state.value = EditUserCardUiState(
-                    isLoading = false,
-                    notFound = true
-                )
-            }
-        }
-    }
+    private val _state = MutableStateFlow(AddCardToDeckUiState())
+    val state: StateFlow<AddCardToDeckUiState> = _state
 
     fun onTypeChanged(type: CardType) {
         val current = _state.value
         _state.value = when (type) {
             CardType.CLOZE -> {
-                // Switching to CLOZE: clear front/back, keep cloze fields
                 current.copy(
                     selectedType = type,
                     front = "",
@@ -112,7 +49,6 @@ class EditUserCardViewModel(
                 )
             }
             else -> {
-                // Switching away from CLOZE: clear cloze fields, keep front/back
                 current.copy(
                     selectedType = type,
                     clozeText = "",
@@ -149,7 +85,7 @@ class EditUserCardViewModel(
 
         // Validate based on type
         when (type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+            CardType.BASIC, CardType.BASIC_TYPED -> {
                 val front = _state.value.front.trim()
                 val back = _state.value.back.trim()
 
@@ -180,15 +116,22 @@ class EditUserCardViewModel(
                     return
                 }
             }
+            // BASIC_REVERSED is not selectable, but handle for exhaustive when
+            CardType.BASIC_REVERSED -> {
+                val front = _state.value.front.trim()
+                val back = _state.value.back.trim()
+                if (front.isBlank() || back.isBlank()) {
+                    _state.value = _state.value.copy(errorMessage = "Заполните все поля")
+                    return
+                }
+            }
         }
 
         _state.value = _state.value.copy(isSaving = true, errorMessage = null)
 
         viewModelScope.launch {
             try {
-                val success = userRepo.updateCardFull(
-                    deckId = deckId,
-                    cardId = cardId,
+                val draft = DraftCard(
                     type = type,
                     front = _state.value.front,
                     back = _state.value.back,
@@ -196,13 +139,15 @@ class EditUserCardViewModel(
                     clozeAnswer = _state.value.clozeAnswer.ifBlank { null },
                     clozeHint = _state.value.clozeHint.ifBlank { null }
                 )
+
+                val success = userRepo.addCardToDeck(deckId, draft)
                 if (success) {
                     _state.value = _state.value.copy(isSaving = false, savedSuccessfully = true)
                     onSuccess()
                 } else {
                     _state.value = _state.value.copy(
                         isSaving = false,
-                        errorMessage = "Не удалось сохранить"
+                        errorMessage = "Не удалось сохранить карточку"
                     )
                 }
             } catch (e: Exception) {
@@ -212,5 +157,15 @@ class EditUserCardViewModel(
                 )
             }
         }
+    }
+}
+
+class AddCardToDeckViewModelFactory(
+    private val app: Application,
+    private val deckId: String
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return AddCardToDeckViewModel(app, deckId) as T
     }
 }

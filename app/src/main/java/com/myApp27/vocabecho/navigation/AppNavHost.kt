@@ -10,6 +10,7 @@ import com.myApp27.vocabecho.ui.DecksScreen
 import com.myApp27.vocabecho.ui.FeedbackScreen
 import com.myApp27.vocabecho.ui.LearnScreen
 import com.myApp27.vocabecho.ui.ParentSettingsScreen
+import com.myApp27.vocabecho.ui.parent.AddCardToDeckScreen
 import com.myApp27.vocabecho.ui.parent.AddDeckScreen
 import com.myApp27.vocabecho.ui.parent.EditUserCardScreen
 import com.myApp27.vocabecho.ui.parent.ManageDeckCardsScreen
@@ -121,6 +122,9 @@ fun AppNavHost() {
                 onBack = { navController.popBackStack() },
                 onEditCard = { cardId ->
                     navController.navigate(Routes.editUserCard(deckId, cardId))
+                },
+                onAddCard = {
+                    navController.navigate(Routes.addCardToDeck(deckId))
                 }
             )
         }
@@ -139,6 +143,19 @@ fun AppNavHost() {
             EditUserCardScreen(
                 deckId = deckId,
                 cardId = cardId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 9) Добавление карточки в существующую колоду
+        composable(
+            route = Routes.ADD_CARD_TO_DECK,
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
+
+            AddCardToDeckScreen(
+                deckId = deckId,
                 onBack = { navController.popBackStack() }
             )
         }

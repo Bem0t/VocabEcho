@@ -372,10 +372,12 @@ private fun CardTypeSelector(
 ) {
     val types = listOf(
         CardType.BASIC to "BASIC",
-        CardType.BASIC_REVERSED to "x2",
         CardType.BASIC_TYPED to "TYPED",
         CardType.CLOZE to "CLOZE"
     )
+
+    // Map BASIC_REVERSED to BASIC for display
+    val displayType = if (selectedType == CardType.BASIC_REVERSED) CardType.BASIC else selectedType
 
     Row(
         modifier = Modifier
@@ -385,7 +387,7 @@ private fun CardTypeSelector(
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         types.forEach { (type, label) ->
-            val isSelected = selectedType == type
+            val isSelected = displayType == type
             val interactionSource = rememberPressInteraction()
 
             Box(
@@ -417,8 +419,7 @@ private fun CardTypeSelector(
  * Returns a short description for each card type.
  */
 private fun cardTypeDescription(type: CardType): String = when (type) {
-    CardType.BASIC -> "Показывает лицевую сторону, затем правильный ответ."
-    CardType.BASIC_REVERSED -> "Две карточки: туда и обратно (вопрос/ответ меняются местами)."
+    CardType.BASIC, CardType.BASIC_REVERSED -> "Показывает лицевую сторону, затем правильный ответ."
     CardType.BASIC_TYPED -> "Нужно ввести ответ текстом, затем сравнить с правильным."
     CardType.CLOZE -> "Пропуск в предложении: нужно вписать скрытое слово/фразу."
 }

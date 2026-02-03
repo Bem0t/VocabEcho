@@ -5,11 +5,12 @@ import com.myApp27.vocabecho.data.db.UserCardEntity
 /**
  * Generates CardInstance(s) from a UserCardEntity (note).
  * 
- * One note can generate multiple instances depending on its type:
- * - BASIC: 1 instance
- * - BASIC_REVERSED: 2 instances (forward + reverse)
- * - BASIC_TYPED: 1 instance
- * - CLOZE: 1 instance (for now; can be extended for multiple clozes)
+ * One note can generate one instance depending on its type:
+ * - BASIC: 1 instance (front -> back)
+ * - BASIC_TYPED: 1 instance (front -> back, with typing)
+ * - CLOZE: 1 instance (sentence with blank)
+ * 
+ * Note: BASIC_REVERSED is deprecated and treated as BASIC via CardType.fromString().
  */
 object CardInstanceGenerator {
 
@@ -22,7 +23,8 @@ object CardInstanceGenerator {
         val deckId = entity.deckId
 
         return when (type) {
-            CardType.BASIC -> listOf(
+            // BASIC and BASIC_REVERSED (legacy) are treated the same
+            CardType.BASIC, CardType.BASIC_REVERSED -> listOf(
                 CardInstance(
                     instanceId = "${noteId}#F",
                     noteId = noteId,
@@ -32,31 +34,6 @@ object CardInstanceGenerator {
                     answerText = entity.back,
                     expectsTyping = false,
                     direction = null
-                )
-            )
-
-            CardType.BASIC_REVERSED -> listOf(
-                // Forward: front -> back
-                CardInstance(
-                    instanceId = "${noteId}#F",
-                    noteId = noteId,
-                    deckId = deckId,
-                    type = CardType.BASIC_REVERSED,
-                    questionText = entity.front,
-                    answerText = entity.back,
-                    expectsTyping = false,
-                    direction = CardInstance.DIRECTION_FORWARD
-                ),
-                // Reverse: back -> front
-                CardInstance(
-                    instanceId = "${noteId}#R",
-                    noteId = noteId,
-                    deckId = deckId,
-                    type = CardType.BASIC_REVERSED,
-                    questionText = entity.back,
-                    answerText = entity.front,
-                    expectsTyping = false,
-                    direction = CardInstance.DIRECTION_REVERSE
                 )
             )
 

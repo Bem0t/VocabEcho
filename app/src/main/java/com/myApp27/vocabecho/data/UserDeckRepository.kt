@@ -270,6 +270,51 @@ class UserDeckRepository(
     }
 
     /**
+     * Add a single card to an existing deck.
+     * @return true if insert succeeded
+     */
+    suspend fun addCardToDeck(deckId: String, draft: DraftCard): Boolean {
+        val today = TimeProvider.todayEpochDay()
+        val cardId = UUID.randomUUID().toString()
+
+        val entity = when (draft.type) {
+            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                UserCardEntity(
+                    id = cardId,
+                    deckId = deckId,
+                    front = draft.front.trim(),
+                    back = draft.back.trim(),
+                    createdAtEpochDay = today,
+                    type = draft.type.name,
+                    clozeText = null,
+                    clozeAnswer = null,
+                    clozeHint = null
+                )
+            }
+            CardType.CLOZE -> {
+                UserCardEntity(
+                    id = cardId,
+                    deckId = deckId,
+                    front = "",
+                    back = "",
+                    createdAtEpochDay = today,
+                    type = CardType.CLOZE.name,
+                    clozeText = draft.clozeText?.trim(),
+                    clozeAnswer = draft.clozeAnswer?.trim(),
+                    clozeHint = draft.clozeHint?.trim()
+                )
+            }
+        }
+
+        return try {
+            cardDao.insertAll(listOf(entity))
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
      * Delete a card and its related progress/stats.
      * @return true if delete succeeded
      */
