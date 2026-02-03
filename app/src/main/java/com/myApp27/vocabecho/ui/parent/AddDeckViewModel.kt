@@ -172,7 +172,7 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 // Case-insensitive check
                 if (!clozeText.contains(clozeAnswer, ignoreCase = true)) {
-                    _state.value = _state.value.copy(inputError = "Скрываемое слово не найдено в тексте")
+                    _state.value = _state.value.copy(inputError = "Скрываемая фраза не найдена в тексте. Проверьте написание.")
                     return
                 }
 

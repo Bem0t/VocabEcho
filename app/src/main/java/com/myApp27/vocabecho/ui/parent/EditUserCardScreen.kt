@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.CardType
+import com.myApp27.vocabecho.ui.components.ClozePreview
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
@@ -199,6 +200,15 @@ fun EditUserCardScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         placeholder = { Text("город") },
                                         shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    // Live preview
+                                    ClozePreview(
+                                        sentence = state.clozeText,
+                                        answer = state.clozeAnswer,
+                                        hint = state.clozeHint.ifBlank { null }
                                     )
                                 }
                             }

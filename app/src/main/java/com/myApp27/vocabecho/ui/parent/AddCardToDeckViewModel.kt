@@ -112,7 +112,7 @@ class AddCardToDeckViewModel(
                 }
                 // Case-insensitive check
                 if (!clozeText.contains(clozeAnswer, ignoreCase = true)) {
-                    _state.value = _state.value.copy(errorMessage = "Скрываемое слово не найдено в тексте")
+                    _state.value = _state.value.copy(errorMessage = "Скрываемая фраза не найдена в тексте. Проверьте написание.")
                     return
                 }
             }
