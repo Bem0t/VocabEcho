@@ -201,7 +201,7 @@ fun FeedbackScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CuteButton(
-                    text = "Нет",
+                    text = "Ошибка",
                     background = Color(0xFFF05A3A),
                     modifier = Modifier.weight(1f),
                     enabled = true,
@@ -220,7 +220,7 @@ fun FeedbackScreen(
                 )
 
                 CuteButton(
-                    text = "Да",
+                    text = "Верно",
                     background = Color(0xFF3B87D9),
                     modifier = Modifier.weight(1f),
                     enabled = true,
