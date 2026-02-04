@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -72,8 +73,10 @@ fun DecksScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(horizontal = 18.dp)
-                .padding(top = 22.dp, bottom = 22.dp),
+                .padding(top = 22.dp, bottom = 16.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BubbleTitle(text = "Выбери тему")
@@ -119,7 +122,7 @@ fun DecksScreen(
                 }
             }
 
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(16.dp))
 
             ParentsButton(
                 text = "Родителям",

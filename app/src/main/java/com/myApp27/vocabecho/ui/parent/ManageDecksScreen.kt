@@ -96,8 +96,10 @@ fun ManageDecksScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(horizontal = 18.dp)
-                .padding(top = 18.dp, bottom = 18.dp),
+                .padding(top = 18.dp, bottom = 16.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HeaderPill(text = "Мои колоды")

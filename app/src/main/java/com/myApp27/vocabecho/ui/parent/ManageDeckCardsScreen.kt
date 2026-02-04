@@ -99,8 +99,10 @@ fun ManageDeckCardsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(horizontal = 18.dp)
-                .padding(top = 18.dp, bottom = 18.dp),
+                .padding(top = 18.dp, bottom = 16.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HeaderPill(text = if (state.deckTitle.isNotBlank()) state.deckTitle else "Карточки")
@@ -283,7 +285,8 @@ private fun ActionPill(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Card(
             shape = shapeInner,
@@ -291,12 +294,18 @@ private fun ActionPill(
             modifier = Modifier.fillMaxSize(),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     text = text,
                     color = textColor,
                     fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
