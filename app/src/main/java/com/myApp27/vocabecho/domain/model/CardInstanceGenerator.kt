@@ -105,16 +105,19 @@ object CardInstanceGenerator {
     /**
      * Convert a simple Card (from built-in deck) to a CardInstance.
      * Used for compatibility with existing code.
+     * Built-in decks default to BASIC_TYPED (requires typing).
+     * Respects card.type if already set.
      */
     fun fromSimpleCard(card: Card, deckId: String): CardInstance {
+        val cardType = card.type
         return CardInstance(
             instanceId = "${card.id}#F",
             noteId = card.id,
             deckId = deckId,
-            type = CardType.BASIC,
+            type = cardType,
             questionText = card.front,
             answerText = card.back,
-            expectsTyping = false,
+            expectsTyping = cardType.expectsTyping(),
             direction = null
         )
     }

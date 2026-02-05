@@ -106,7 +106,14 @@ fun FeedbackScreen(
     val done = (learnedCount + 1).coerceAtMost(todayTotal)
 
     val correct = currentCard.back
-    val isCorrect = AnswerNormalizer.isCorrect(userAnswer, correct)
+    // Only auto-evaluate if card expects typing (BASIC_TYPED, CLOZE)
+    // For BASIC cards, user decides correctness via Yes/No buttons
+    val expectsTyping = currentCard.expectsTyping
+    val isCorrect = if (expectsTyping) {
+        AnswerNormalizer.isCorrect(userAnswer, correct)
+    } else {
+        null // No auto-evaluation for recognition-only cards
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -157,17 +164,20 @@ fun FeedbackScreen(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // ✅ 1) ответ ребёнка: фон НЕ красный/зелёный, а нейтральный
-                    ResultRow(
-                        text = buildLetterDiffAnnotated(
-                            user = userAnswer,
-                            correct = correct
-                        ),
-                        rightEmoji = if (isCorrect) "✅" else "❌",
-                        container = Color(0x18FFFFFF) // нейтральный светлый
-                    )
+                    // Show user's answer row only if typing was expected
+                    if (expectsTyping) {
+                        // ✅ 1) ответ ребёнка: фон НЕ красный/зелёный, а нейтральный
+                        ResultRow(
+                            text = buildLetterDiffAnnotated(
+                                user = userAnswer,
+                                correct = correct
+                            ),
+                            rightEmoji = if (isCorrect == true) "✅" else "❌",
+                            container = Color(0x18FFFFFF) // нейтральный светлый
+                        )
+                    }
 
-                    // ✅ 2) правильный ответ: можно оставить лёгкий зелёный (как подсказка)
+                    // ✅ 2) правильный ответ: всегда показываем
                     ResultRow(
                         text = buildAnnotatedString {
                             withStyle(
@@ -187,13 +197,23 @@ fun FeedbackScreen(
 
             Spacer(Modifier.height(18.dp))
 
-            // Подсказка: что думает система
-            Text(
-                text = if (isCorrect) "Я думаю: верно" else "Я думаю: ошибка",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge
-            )
+            // Подсказка: что думает система (only for typed cards)
+            if (expectsTyping && isCorrect != null) {
+                Text(
+                    text = if (isCorrect) "Я думаю: верно" else "Я думаю: ошибка",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                // For BASIC cards: prompt user to self-evaluate
+                Text(
+                    text = "Знал(а) ответ?",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 

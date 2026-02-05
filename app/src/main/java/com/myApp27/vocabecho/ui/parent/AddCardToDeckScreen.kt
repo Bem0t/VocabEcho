@@ -356,7 +356,12 @@ private fun CardTypeSelector(
  * Returns a short description for each card type.
  */
 private fun cardTypeDescription(type: CardType): String = when (type) {
-    CardType.BASIC, CardType.BASIC_REVERSED -> "Показывает лицевую сторону, затем правильный ответ."
-    CardType.BASIC_TYPED -> "Нужно ввести ответ текстом, затем сравнить с правильным."
-    CardType.CLOZE -> "Пропуск в предложении: нужно вписать скрытое слово/фразу."
+    CardType.BASIC, CardType.BASIC_REVERSED ->
+        "Ребёнок вспоминает ответ про себя и затем видит правильный вариант. Подходит для знакомства со словами."
+
+    CardType.BASIC_TYPED ->
+        "Ребёнок должен сам написать ответ без подсказки. Подходит для закрепления и проверки знаний."
+
+    CardType.CLOZE ->
+        "В предложении пропущено слово или фраза. Ребёнок должен вспомнить и вписать пропуск."
 }

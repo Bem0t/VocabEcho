@@ -93,8 +93,10 @@ fun LearnScreen(
 
             Spacer(Modifier.height(14.dp))
 
+            // Title changes based on card type
+            val titleText = if (card?.expectsTyping == true) "Введи перевод" else "Вспомни ответ"
             Text(
-                text = "Введи перевод",
+                text = titleText,
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold
@@ -131,7 +133,7 @@ fun LearnScreen(
                             return@Column
                         }
 
-                        // Показываем на русском
+                        // Показываем вопрос
                         Text(
                             text = card.front,
                             color = Color(0xFF0B4AA2),
@@ -139,60 +141,73 @@ fun LearnScreen(
                             fontWeight = FontWeight.ExtraBold
                         )
 
-                        Spacer(Modifier.height(10.dp))
+                        // Only show input field if card expects typing (BASIC_TYPED, CLOZE)
+                        if (card.expectsTyping) {
+                            Spacer(Modifier.height(10.dp))
 
-                        // Поле ввода с animated focus border
-                        val (answerInteraction, isAnswerFocused) = rememberFocusInteraction()
-                        val answerBorderColor = animatedBorderColor(
-                            isFocused = isAnswerFocused,
-                            focusedColor = Color(0xFF0B4AA2),
-                            unfocusedColor = Color(0xFFD0C8BE)
-                        )
-
-                        OutlinedTextField(
-                            value = userAnswer,
-                            onValueChange = { userAnswer = it },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("") },
-                            shape = RoundedCornerShape(12.dp),
-                            interactionSource = answerInteraction,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFFF7F3EC),
-                                unfocusedContainerColor = Color(0xFFF7F3EC),
-                                disabledContainerColor = Color(0xFFF7F3EC),
-
-                                focusedBorderColor = answerBorderColor,
-                                unfocusedBorderColor = answerBorderColor,
-                                disabledBorderColor = Color(0xFFD0C8BE),
-
-                                cursorColor = Color(0xFF0B4AA2),
-                                focusedTextColor = Color(0xFF0B4AA2),
-                                unfocusedTextColor = Color(0xFF0B4AA2)
+                            // Поле ввода с animated focus border
+                            val (answerInteraction, isAnswerFocused) = rememberFocusInteraction()
+                            val answerBorderColor = animatedBorderColor(
+                                isFocused = isAnswerFocused,
+                                focusedColor = Color(0xFF0B4AA2),
+                                unfocusedColor = Color(0xFFD0C8BE)
                             )
-                        )
+
+                            OutlinedTextField(
+                                value = userAnswer,
+                                onValueChange = { userAnswer = it },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("") },
+                                shape = RoundedCornerShape(12.dp),
+                                interactionSource = answerInteraction,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color(0xFFF7F3EC),
+                                    unfocusedContainerColor = Color(0xFFF7F3EC),
+                                    disabledContainerColor = Color(0xFFF7F3EC),
+
+                                    focusedBorderColor = answerBorderColor,
+                                    unfocusedBorderColor = answerBorderColor,
+                                    disabledBorderColor = Color(0xFFD0C8BE),
+
+                                    cursorColor = Color(0xFF0B4AA2),
+                                    focusedTextColor = Color(0xFF0B4AA2),
+                                    unfocusedTextColor = Color(0xFF0B4AA2)
+                                )
+                            )
+                        }
                     }
                 }
             }
 
             Spacer(Modifier.weight(1f))
 
-            // Кнопки как на референсе: белая рамка + тень + "выпуклость"
+            // Кнопки: меняются в зависимости от типа карточки
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // For BASIC (no typing): button shows answer directly
+                // For BASIC_TYPED/CLOZE: button checks typed answer
+                val checkButtonText = if (card?.expectsTyping == true) "😊 Проверить" else "👀 Показать"
+                val checkEnabled = if (card?.expectsTyping == true) {
+                    card != null && userAnswer.isNotBlank()
+                } else {
+                    card != null
+                }
+
                 CuteButton(
-                    text = "😊 Проверить",
+                    text = checkButtonText,
                     background = Color(0xFFF05A3A),
                     modifier = Modifier.weight(1f),
                     onClick = {
                         val c = card ?: return@CuteButton
+                        // For BASIC cards, pass empty answer (user will self-evaluate)
                         onChecked(c.id, userAnswer)
                     },
-                    enabled = card != null && userAnswer.isNotBlank()
+                    enabled = checkEnabled
                 )
 
                 CuteButton(

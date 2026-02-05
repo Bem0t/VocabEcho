@@ -152,14 +152,19 @@ class UserDeckRepository(
     /**
      * Convert UserCardEntity to Card model with proper question/answer based on type.
      * This ensures all card types work in the learn flow.
+     * Preserves card type so UI can determine if typing is expected.
      */
     private fun entityToCard(entity: UserCardEntity): Card {
         val type = CardType.fromString(entity.type)
 
         return when (type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
-                // Use front/back as-is
-                Card(id = entity.id, front = entity.front, back = entity.back)
+            CardType.BASIC, CardType.BASIC_REVERSED -> {
+                // Use front/back as-is, type determines no typing required
+                Card(id = entity.id, front = entity.front, back = entity.back, type = CardType.BASIC)
+            }
+            CardType.BASIC_TYPED -> {
+                // Use front/back as-is, type determines typing required
+                Card(id = entity.id, front = entity.front, back = entity.back, type = CardType.BASIC_TYPED)
             }
             CardType.CLOZE -> {
                 // Generate question with placeholder, answer is the hidden word
@@ -167,8 +172,8 @@ class UserDeckRepository(
                 val clozeAnswer = entity.clozeAnswer
 
                 if (clozeText.isNullOrBlank() || clozeAnswer.isNullOrBlank()) {
-                    // Fallback if cloze data is missing
-                    Card(id = entity.id, front = entity.front, back = entity.back)
+                    // Fallback if cloze data is missing - use BASIC_TYPED as safe default
+                    Card(id = entity.id, front = entity.front, back = entity.back, type = CardType.BASIC_TYPED)
                 } else {
                     val placeholder = if (!entity.clozeHint.isNullOrBlank()) {
                         "[${entity.clozeHint}]"
@@ -177,7 +182,7 @@ class UserDeckRepository(
                     }
                     // Case-insensitive, first occurrence only
                     val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
-                    Card(id = entity.id, front = questionText, back = clozeAnswer)
+                    Card(id = entity.id, front = questionText, back = clozeAnswer, type = CardType.CLOZE)
                 }
             }
         }
