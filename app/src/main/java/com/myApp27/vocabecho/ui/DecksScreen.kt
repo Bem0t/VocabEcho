@@ -13,7 +13,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -176,6 +175,33 @@ private fun deckToTileUi(deck: Deck): DeckTileUi {
             imageUri = null,
             isBuiltIn = true
         )
+        "colors" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFFE8637A),
+            imageRes = null,
+            imageUri = null,
+            isBuiltIn = true
+        )
+        "family" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFF5DAFB0),
+            imageRes = null,
+            imageUri = null,
+            isBuiltIn = true
+        )
+        "school" -> DeckTileUi(
+            id = deck.id,
+            title = deck.title,
+            countText = cardCountText,
+            tileColor = Color(0xFFD4883A),
+            imageRes = null,
+            imageUri = null,
+            isBuiltIn = true
+        )
         else -> DeckTileUi(
             id = deck.id,
             title = deck.title,
@@ -269,7 +295,7 @@ private fun DeckTile(
         ) {
             Box(Modifier.fillMaxSize()) {
                 when {
-                    // Built-in deck: show drawable
+                    // Built-in deck with drawable image
                     ui.isBuiltIn && ui.imageRes != null -> {
                         Image(
                             painter = painterResource(ui.imageRes),
@@ -287,8 +313,8 @@ private fun DeckTile(
                             contentScale = ContentScale.Crop
                         )
                     }
-                    // User deck without image: show large title
-                    !ui.isBuiltIn -> {
+                    // Deck without image (built-in or user): show large title
+                    else -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -307,8 +333,9 @@ private fun DeckTile(
                     }
                 }
 
-                // Title overlay (only for built-in or decks with images)
-                if (ui.isBuiltIn || userImageBitmap != null) {
+                // Title overlay (only for decks that have an image, not for text-only tiles)
+                val hasImage = (ui.isBuiltIn && ui.imageRes != null) || (!ui.isBuiltIn && userImageBitmap != null)
+                if (hasImage) {
                     Text(
                         text = ui.title,
                         color = Color.White,
@@ -392,13 +419,10 @@ private fun ParentsButton(
             modifier = Modifier.fillMaxSize(),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                contentAlignment = Alignment.Center
             ) {
-                Text("🔒", fontSize = MaterialTheme.typography.titleLarge.fontSize)
-                Spacer(Modifier.width(10.dp))
                 Text(
                     text = text,
                     color = Color.White,

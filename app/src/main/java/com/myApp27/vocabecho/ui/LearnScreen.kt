@@ -30,15 +30,6 @@ import com.myApp27.vocabecho.ui.components.rememberFocusInteraction
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import com.myApp27.vocabecho.ui.learn.LearnViewModel
 
-private fun deckEmoji(deckId: String): String =
-    when (deckId) {
-        "animals" -> "🐾"
-        "food" -> "🍎"
-        "transport" -> "🚗"
-        "home" -> "🏠"
-        else -> "📘"
-    }
-
 @Composable
 fun LearnScreen(
     deckId: String,
@@ -88,7 +79,7 @@ fun LearnScreen(
 
                 Spacer(Modifier.weight(1f))
 
-                Capsule(text = "${deckEmoji(deckId)} ${state.deckTitle.ifBlank { "Тема" }}")
+                Capsule(text = state.deckTitle.ifBlank { "Тема" })
             }
 
             Spacer(Modifier.height(14.dp))
@@ -129,7 +120,7 @@ fun LearnScreen(
                             return@Column
                         }
                         if (card == null) {
-                            Text("На сегодня всё 🎉")
+                            Text("На сегодня всё!")
                             return@Column
                         }
 
@@ -191,7 +182,7 @@ fun LearnScreen(
             ) {
                 // For BASIC (no typing): button shows answer directly
                 // For BASIC_TYPED/CLOZE: button checks typed answer
-                val checkButtonText = if (card?.expectsTyping == true) "😊 Проверить" else "👀 Показать"
+                val checkButtonText = if (card?.expectsTyping == true) "Проверить" else "Показать"
                 val checkEnabled = if (card?.expectsTyping == true) {
                     card != null && userAnswer.isNotBlank()
                 } else {
@@ -211,7 +202,7 @@ fun LearnScreen(
                 )
 
                 CuteButton(
-                    text = "➡️ Пропустить",
+                    text = "Пропустить",
                     background = Color(0xFF3B87D9),
                     modifier = Modifier.weight(1f),
                     onClick = { vm.moveNext() },

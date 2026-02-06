@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
  */
 data class DraftCard(
     val type: CardType,
-    // For BASIC / BASIC_REVERSED / BASIC_TYPED
+    // For BASIC / BASIC_TYPED
     val front: String = "",
     val back: String = "",
     // For CLOZE
@@ -58,9 +58,9 @@ data class DraftCard(
      */
     fun typeLabel(): String = when (type) {
         CardType.BASIC -> "BASIC"
-        CardType.BASIC_REVERSED -> "x2"
         CardType.BASIC_TYPED -> "TYPED"
         CardType.CLOZE -> "CLOZE"
+        else -> "BASIC"
     }
 }
 
@@ -68,7 +68,7 @@ data class AddDeckUiState(
     val title: String = "",
     // Card type selection
     val selectedCardType: CardType = CardType.BASIC,
-    // Fields for BASIC / BASIC_REVERSED / BASIC_TYPED
+    // Fields for BASIC / BASIC_TYPED
     val currentFront: String = "",
     val currentBack: String = "",
     // Fields for CLOZE
@@ -130,7 +130,7 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
         val type = _state.value.selectedCardType
 
         when (type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+            CardType.BASIC, CardType.BASIC_TYPED -> {
                 val front = _state.value.currentFront.trim()
                 val back = _state.value.currentBack.trim()
 
@@ -191,6 +191,8 @@ class AddDeckViewModel(app: Application) : AndroidViewModel(app) {
                     inputError = null
                 )
             }
+
+            else -> { /* BASIC_REVERSED deprecated, not reachable from UI */ }
         }
     }
 

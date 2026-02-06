@@ -10,7 +10,7 @@ class CombinedDeckRepository(
     private val userRepo: UserDeckRepository
 ) {
     // Built-in deck IDs that are reserved
-    private val builtInDeckIds = setOf("animals", "food", "transport", "home")
+    private val builtInDeckIds = setOf("animals", "food", "transport", "home", "colors", "family", "school")
 
     /**
      * Load all decks: built-in first, then user-created.

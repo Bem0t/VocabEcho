@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 data class EditUserCardUiState(
     // Card type
     val selectedType: CardType = CardType.BASIC,
-    // Fields for BASIC / BASIC_REVERSED / BASIC_TYPED
+    // Fields for BASIC / BASIC_TYPED
     val front: String = "",
     val back: String = "",
     // Fields for CLOZE
@@ -52,18 +52,6 @@ class EditUserCardViewModel(
                 // Map BASIC_REVERSED to BASIC for editing
                 val displayType = if (type == CardType.BASIC_REVERSED) CardType.BASIC else type
                 _state.value = when (displayType) {
-                    CardType.BASIC, CardType.BASIC_TYPED -> {
-                        EditUserCardUiState(
-                            selectedType = displayType,
-                            front = entity.front,
-                            back = entity.back,
-                            clozeText = "",
-                            clozeAnswer = "",
-                            clozeHint = "",
-                            isLoading = false,
-                            notFound = false
-                        )
-                    }
                     CardType.CLOZE -> {
                         EditUserCardUiState(
                             selectedType = CardType.CLOZE,
@@ -76,10 +64,9 @@ class EditUserCardViewModel(
                             notFound = false
                         )
                     }
-                    // BASIC_REVERSED handled above, but keep for exhaustive when
-                    CardType.BASIC_REVERSED -> {
+                    else -> {
                         EditUserCardUiState(
-                            selectedType = CardType.BASIC,
+                            selectedType = displayType,
                             front = entity.front,
                             back = entity.back,
                             clozeText = "",
@@ -149,7 +136,7 @@ class EditUserCardViewModel(
 
         // Validate based on type
         when (type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+            CardType.BASIC, CardType.BASIC_TYPED -> {
                 val front = _state.value.front.trim()
                 val back = _state.value.back.trim()
 
@@ -180,6 +167,7 @@ class EditUserCardViewModel(
                     return
                 }
             }
+            else -> { /* BASIC_REVERSED deprecated, treat as BASIC */ }
         }
 
         _state.value = _state.value.copy(isSaving = true, errorMessage = null)

@@ -1,9 +1,12 @@
 package com.myApp27.vocabecho.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Anki-like card types for user-created cards.
  * Built-in decks continue to use simple front/back model.
  */
+@Serializable
 enum class CardType {
     /**
      * Basic card: front -> back (1 card generated)

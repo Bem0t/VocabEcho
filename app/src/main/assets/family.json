@@ -1,0 +1,40 @@
+{
+  "id": "family",
+  "title": "Семья",
+  "cards": [
+    { "id": "family_01", "front": "Мама", "back": "mother", "type": "BASIC_TYPED" },
+    { "id": "family_02", "front": "Папа", "back": "father", "type": "BASIC_TYPED" },
+    { "id": "family_03", "front": "Брат", "back": "brother", "type": "BASIC_TYPED" },
+    { "id": "family_04", "front": "Сестра", "back": "sister", "type": "BASIC_TYPED" },
+    { "id": "family_05", "front": "Бабушка", "back": "grandmother", "type": "BASIC_TYPED" },
+    { "id": "family_06", "front": "Дедушка", "back": "grandfather", "type": "BASIC_TYPED" },
+    {
+      "id": "family_07",
+      "type": "CLOZE",
+      "clozeText": "My mother is kind.",
+      "clozeAnswer": "mother",
+      "clozeHint": "родственник"
+    },
+    {
+      "id": "family_08",
+      "type": "CLOZE",
+      "clozeText": "I have a younger brother.",
+      "clozeAnswer": "brother",
+      "clozeHint": "родственник"
+    },
+    {
+      "id": "family_09",
+      "type": "CLOZE",
+      "clozeText": "My sister goes to school.",
+      "clozeAnswer": "sister",
+      "clozeHint": "родственник"
+    },
+    {
+      "id": "family_10",
+      "type": "CLOZE",
+      "clozeText": "Grandfather reads a book every evening.",
+      "clozeAnswer": "Grandfather",
+      "clozeHint": "родственник"
+    }
+  ]
+}

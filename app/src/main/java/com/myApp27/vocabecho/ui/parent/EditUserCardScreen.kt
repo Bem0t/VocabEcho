@@ -28,6 +28,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.ui.components.ClozePreview
+import com.myApp27.vocabecho.ui.components.descriptionRu
+import com.myApp27.vocabecho.ui.components.displayNameRu
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
@@ -115,7 +117,7 @@ fun EditUserCardScreen(
 
                             // Type description
                             Text(
-                                text = cardTypeDescription(state.selectedType),
+                                text = state.selectedType.descriptionRu(),
                                 color = Color(0xFF666666),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -124,7 +126,7 @@ fun EditUserCardScreen(
 
                             // Dynamic form fields based on card type
                             when (state.selectedType) {
-                                CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                                CardType.BASIC, CardType.BASIC_TYPED -> {
                                     Text(
                                         text = "Лицевая сторона",
                                         fontWeight = FontWeight.Bold,
@@ -213,6 +215,8 @@ fun EditUserCardScreen(
                                         hint = state.clozeHint.ifBlank { null }
                                     )
                                 }
+
+                                else -> { /* deprecated types not shown */ }
                             }
 
                             // Error message
@@ -246,10 +250,11 @@ fun EditUserCardScreen(
                     )
 
                     val canSave = when (state.selectedType) {
-                        CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED ->
+                        CardType.BASIC, CardType.BASIC_TYPED ->
                             state.front.isNotBlank() && state.back.isNotBlank() && !state.isSaving
                         CardType.CLOZE ->
                             state.clozeText.isNotBlank() && state.clozeAnswer.isNotBlank() && !state.isSaving
+                        else -> state.front.isNotBlank() && state.back.isNotBlank() && !state.isSaving
                     }
                     ActionButton(
                         text = if (state.isSaving) "Сохранение..." else "Сохранить",
@@ -382,11 +387,7 @@ private fun CardTypeSelector(
     selectedType: CardType,
     onTypeSelected: (CardType) -> Unit
 ) {
-    val types = listOf(
-        CardType.BASIC to "BASIC",
-        CardType.BASIC_TYPED to "TYPED",
-        CardType.CLOZE to "CLOZE"
-    )
+    val types = CardType.selectableTypes()
 
     // Map BASIC_REVERSED to BASIC for display
     val displayType = if (selectedType == CardType.BASIC_REVERSED) CardType.BASIC else selectedType
@@ -398,7 +399,7 @@ private fun CardTypeSelector(
             .background(Color(0xFFE8E4F0)),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        types.forEach { (type, label) ->
+        types.forEach { type ->
             val isSelected = displayType == type
             val interactionSource = rememberPressInteraction()
 
@@ -417,7 +418,7 @@ private fun CardTypeSelector(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = label,
+                    text = type.displayNameRu(),
                     color = if (isSelected) Color.White else Color(0xFF0B4AA2),
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     style = MaterialTheme.typography.bodySmall
@@ -425,13 +426,4 @@ private fun CardTypeSelector(
             }
         }
     }
-}
-
-/**
- * Returns a short description for each card type.
- */
-private fun cardTypeDescription(type: CardType): String = when (type) {
-    CardType.BASIC, CardType.BASIC_REVERSED -> "Показывает лицевую сторону, затем правильный ответ."
-    CardType.BASIC_TYPED -> "Нужно ввести ответ текстом, затем сравнить с правильным."
-    CardType.CLOZE -> "Пропуск в предложении: нужно вписать скрытое слово/фразу."
 }

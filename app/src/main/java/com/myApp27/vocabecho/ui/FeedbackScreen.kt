@@ -106,13 +106,12 @@ fun FeedbackScreen(
     val done = (learnedCount + 1).coerceAtMost(todayTotal)
 
     val correct = currentCard.back
-    // Only auto-evaluate if card expects typing (BASIC_TYPED, CLOZE)
-    // For BASIC cards, user decides correctness via Yes/No buttons
+    // Auto compute correctness for all card types
     val expectsTyping = currentCard.expectsTyping
     val isCorrect = if (expectsTyping) {
-        AnswerNormalizer.isCorrect(userAnswer, correct)
+        AnswerNormalizer.isCorrect(userAnswer, correct) && userAnswer.isNotBlank()
     } else {
-        null // No auto-evaluation for recognition-only cards
+        false // BASIC cards always count as incorrect (user only viewed the answer)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -145,7 +144,7 @@ fun FeedbackScreen(
 
                 Spacer(Modifier.weight(1f))
 
-                Capsule(text = "${deckEmoji(deckId)} ${currentDeck.title}")
+                Capsule(text = currentDeck.title)
             }
 
             Spacer(Modifier.height(18.dp))
@@ -166,18 +165,16 @@ fun FeedbackScreen(
                 ) {
                     // Show user's answer row only if typing was expected
                     if (expectsTyping) {
-                        // ✅ 1) ответ ребёнка: фон НЕ красный/зелёный, а нейтральный
                         ResultRow(
                             text = buildLetterDiffAnnotated(
                                 user = userAnswer,
                                 correct = correct
                             ),
-                            rightEmoji = if (isCorrect == true) "✅" else "❌",
-                            container = Color(0x18FFFFFF) // нейтральный светлый
+                            container = Color(0x18FFFFFF)
                         )
                     }
 
-                    // ✅ 2) правильный ответ: всегда показываем
+                    // Correct answer: always show
                     ResultRow(
                         text = buildAnnotatedString {
                             withStyle(
@@ -189,26 +186,17 @@ fun FeedbackScreen(
                                 append(correct.trim().ifBlank { "—" })
                             }
                         },
-                        rightEmoji = "✅",
-                        container = Color(0x141E8E3E) // очень мягкий зелёный
+                        container = Color(0x141E8E3E)
                     )
                 }
             }
 
             Spacer(Modifier.height(18.dp))
 
-            // Подсказка: что думает система (only for typed cards)
-            if (expectsTyping && isCorrect != null) {
+            // Hint text about auto-evaluation result
+            if (expectsTyping) {
                 Text(
-                    text = if (isCorrect) "Я думаю: верно" else "Я думаю: ошибка",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            } else {
-                // For BASIC cards: prompt user to self-evaluate
-                Text(
-                    text = "Знал(а) ответ?",
+                    text = if (isCorrect) "Верно" else "Ошибка",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyLarge
@@ -217,49 +205,25 @@ fun FeedbackScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Кнопки подтверждения: Да / Нет
-            Row(
+            // Single "Продолжить" button
+            CuteButton(
+                text = "Продолжить",
+                background = Color(0xFF3B87D9),
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                CuteButton(
-                    text = "Ошибка",
-                    background = Color(0xFFF05A3A),
-                    modifier = Modifier.weight(1f),
-                    enabled = true,
-                    onClick = {
-                        scope.launch {
-                            progressRepo.applyAnswerResult(
-                                deckId = deckId,
-                                cardId = cardId,
-                                todayEpochDay = TimeProvider.todayEpochDay(),
-                                isCorrect = false,
-                                settings = settings
-                            )
-                            onNext()
-                        }
+                enabled = true,
+                onClick = {
+                    scope.launch {
+                        progressRepo.applyAnswerResult(
+                            deckId = deckId,
+                            cardId = cardId,
+                            todayEpochDay = TimeProvider.todayEpochDay(),
+                            isCorrect = isCorrect,
+                            settings = settings
+                        )
+                        onNext()
                     }
-                )
-
-                CuteButton(
-                    text = "Верно",
-                    background = Color(0xFF3B87D9),
-                    modifier = Modifier.weight(1f),
-                    enabled = true,
-                    onClick = {
-                        scope.launch {
-                            progressRepo.applyAnswerResult(
-                                deckId = deckId,
-                                cardId = cardId,
-                                todayEpochDay = TimeProvider.todayEpochDay(),
-                                isCorrect = true,
-                                settings = settings
-                            )
-                            onNext()
-                        }
-                    }
-                )
-            }
+                }
+            )
         }
     }
 }
@@ -267,7 +231,6 @@ fun FeedbackScreen(
 @Composable
 private fun ResultRow(
     text: androidx.compose.ui.text.AnnotatedString,
-    rightEmoji: String,
     container: Color
 ) {
     Card(
@@ -285,19 +248,12 @@ private fun ResultRow(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f)
             )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                text = rightEmoji,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold
-            )
         }
     }
 }
 
 /**
- * Подсветка букв: верные -> зелёные, неверные -> красные.
- * Сравнение по позиции.
+ * Letter-by-letter diff highlighting: correct -> green, incorrect -> red.
  */
 private fun buildLetterDiffAnnotated(user: String, correct: String) = buildAnnotatedString {
     val uDisplay = user.trim()
@@ -370,7 +326,7 @@ private fun BackCapsule(onClick: () -> Unit) {
             )
     ) {
         Text(
-            text = "← Назад",
+            text = "Назад",
             color = Color.White,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
@@ -378,7 +334,7 @@ private fun BackCapsule(onClick: () -> Unit) {
     }
 }
 
-/** Кнопка с белой рамкой + тенью + press scale анимацией */
+/** Button with white border + shadow + press scale animation */
 @Composable
 private fun CuteButton(
     text: String,
@@ -423,18 +379,3 @@ private fun CuteButton(
         }
     }
 }
-
-private fun deckEmoji(deckId: String): String =
-    when (deckId) {
-        "animals" -> "🐾"
-        "food" -> "🍎"
-        "transport" -> "🚗"
-        "home" -> "🏠"
-        else -> "📘"
-    }
-
-private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
-    clickable(
-        indication = null,
-        interactionSource = MutableInteractionSource()
-    ) { onClick() }

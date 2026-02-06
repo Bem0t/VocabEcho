@@ -105,11 +105,37 @@ object CardInstanceGenerator {
     /**
      * Convert a simple Card (from built-in deck) to a CardInstance.
      * Used for compatibility with existing code.
-     * Built-in decks default to BASIC_TYPED (requires typing).
-     * Respects card.type if already set.
+     * Respects card.type to determine behavior.
+     * Handles CLOZE cards from built-in decks using clozeText/clozeAnswer fields.
      */
     fun fromSimpleCard(card: Card, deckId: String): CardInstance {
         val cardType = card.type
+
+        if (cardType == CardType.CLOZE) {
+            val clozeText = card.clozeText
+            val clozeAnswer = card.clozeAnswer
+
+            if (!clozeText.isNullOrBlank() && !clozeAnswer.isNullOrBlank()) {
+                val placeholder = if (!card.clozeHint.isNullOrBlank()) {
+                    "[${card.clozeHint}]"
+                } else {
+                    "[...]"
+                }
+                val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
+
+                return CardInstance(
+                    instanceId = "${card.id}#C1",
+                    noteId = card.id,
+                    deckId = deckId,
+                    type = CardType.CLOZE,
+                    questionText = questionText,
+                    answerText = clozeAnswer,
+                    expectsTyping = true,
+                    direction = null
+                )
+            }
+        }
+
         return CardInstance(
             instanceId = "${card.id}#F",
             noteId = card.id,

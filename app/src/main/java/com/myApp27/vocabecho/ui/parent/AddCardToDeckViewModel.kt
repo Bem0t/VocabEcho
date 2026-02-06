@@ -116,15 +116,7 @@ class AddCardToDeckViewModel(
                     return
                 }
             }
-            // BASIC_REVERSED is not selectable, but handle for exhaustive when
-            CardType.BASIC_REVERSED -> {
-                val front = _state.value.front.trim()
-                val back = _state.value.back.trim()
-                if (front.isBlank() || back.isBlank()) {
-                    _state.value = _state.value.copy(errorMessage = "Заполните все поля")
-                    return
-                }
-            }
+            else -> { /* BASIC_REVERSED deprecated, not reachable from UI */ }
         }
 
         _state.value = _state.value.copy(isSaving = true, errorMessage = null)

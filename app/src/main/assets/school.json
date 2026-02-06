@@ -1,0 +1,40 @@
+{
+  "id": "school",
+  "title": "Школа",
+  "cards": [
+    { "id": "school_01", "front": "Книга", "back": "book", "type": "BASIC_TYPED" },
+    { "id": "school_02", "front": "Ручка", "back": "pen", "type": "BASIC_TYPED" },
+    { "id": "school_03", "front": "Учитель", "back": "teacher", "type": "BASIC_TYPED" },
+    { "id": "school_04", "front": "Ученик", "back": "student", "type": "BASIC_TYPED" },
+    { "id": "school_05", "front": "Урок", "back": "lesson", "type": "BASIC_TYPED" },
+    { "id": "school_06", "front": "Доска", "back": "board", "type": "BASIC_TYPED" },
+    {
+      "id": "school_07",
+      "type": "CLOZE",
+      "clozeText": "The teacher writes on the board.",
+      "clozeAnswer": "teacher",
+      "clozeHint": "кто?"
+    },
+    {
+      "id": "school_08",
+      "type": "CLOZE",
+      "clozeText": "I read a book every day.",
+      "clozeAnswer": "book",
+      "clozeHint": "что?"
+    },
+    {
+      "id": "school_09",
+      "type": "CLOZE",
+      "clozeText": "The student writes with a pen.",
+      "clozeAnswer": "pen",
+      "clozeHint": "чем?"
+    },
+    {
+      "id": "school_10",
+      "type": "CLOZE",
+      "clozeText": "We have a math lesson today.",
+      "clozeAnswer": "lesson",
+      "clozeHint": "что?"
+    }
+  ]
+}

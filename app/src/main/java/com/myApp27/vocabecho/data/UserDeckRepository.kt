@@ -84,7 +84,20 @@ class UserDeckRepository(
 
         val cardEntities = draftCards.mapIndexed { index, draft ->
             when (draft.type) {
-                CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+                CardType.CLOZE -> {
+                    UserCardEntity(
+                        id = "${deckId}_card_$index",
+                        deckId = deckId,
+                        front = "",
+                        back = "",
+                        createdAtEpochDay = today,
+                        type = CardType.CLOZE.name,
+                        clozeText = draft.clozeText?.trim(),
+                        clozeAnswer = draft.clozeAnswer?.trim(),
+                        clozeHint = draft.clozeHint?.trim()
+                    )
+                }
+                else -> {
                     UserCardEntity(
                         id = "${deckId}_card_$index",
                         deckId = deckId,
@@ -95,19 +108,6 @@ class UserDeckRepository(
                         clozeText = null,
                         clozeAnswer = null,
                         clozeHint = null
-                    )
-                }
-                CardType.CLOZE -> {
-                    UserCardEntity(
-                        id = "${deckId}_card_$index",
-                        deckId = deckId,
-                        front = "", // Not used for CLOZE
-                        back = "",  // Not used for CLOZE
-                        createdAtEpochDay = today,
-                        type = CardType.CLOZE.name,
-                        clozeText = draft.clozeText?.trim(),
-                        clozeAnswer = draft.clozeAnswer?.trim(),
-                        clozeHint = draft.clozeHint?.trim()
                     )
                 }
             }
@@ -166,7 +166,7 @@ class UserDeckRepository(
                 // Use front/back as-is, type determines typing required
                 Card(id = entity.id, front = entity.front, back = entity.back, type = CardType.BASIC_TYPED)
             }
-            CardType.CLOZE -> {
+            else -> {
                 // Generate question with placeholder, answer is the hidden word
                 val clozeText = entity.clozeText
                 val clozeAnswer = entity.clozeAnswer
@@ -245,7 +245,7 @@ class UserDeckRepository(
         val actualClozeHint: String?
 
         when (type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+            CardType.BASIC, CardType.BASIC_TYPED, CardType.BASIC_REVERSED -> {
                 actualFront = front.trim()
                 actualBack = back.trim()
                 actualClozeText = null
@@ -283,7 +283,7 @@ class UserDeckRepository(
         val cardId = UUID.randomUUID().toString()
 
         val entity = when (draft.type) {
-            CardType.BASIC, CardType.BASIC_REVERSED, CardType.BASIC_TYPED -> {
+            CardType.BASIC, CardType.BASIC_TYPED, CardType.BASIC_REVERSED -> {
                 UserCardEntity(
                     id = cardId,
                     deckId = deckId,

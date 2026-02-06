@@ -1,0 +1,40 @@
+{
+  "id": "colors",
+  "title": "Цвета",
+  "cards": [
+    { "id": "colors_01", "front": "Красный", "back": "red", "type": "BASIC_TYPED" },
+    { "id": "colors_02", "front": "Синий", "back": "blue", "type": "BASIC_TYPED" },
+    { "id": "colors_03", "front": "Зелёный", "back": "green", "type": "BASIC_TYPED" },
+    { "id": "colors_04", "front": "Жёлтый", "back": "yellow", "type": "BASIC_TYPED" },
+    { "id": "colors_05", "front": "Чёрный", "back": "black", "type": "BASIC_TYPED" },
+    { "id": "colors_06", "front": "Белый", "back": "white", "type": "BASIC_TYPED" },
+    {
+      "id": "colors_07",
+      "type": "CLOZE",
+      "clozeText": "The sky is blue.",
+      "clozeAnswer": "blue",
+      "clozeHint": "цвет"
+    },
+    {
+      "id": "colors_08",
+      "type": "CLOZE",
+      "clozeText": "Grass is green.",
+      "clozeAnswer": "green",
+      "clozeHint": "цвет"
+    },
+    {
+      "id": "colors_09",
+      "type": "CLOZE",
+      "clozeText": "Snow is white.",
+      "clozeAnswer": "white",
+      "clozeHint": "цвет"
+    },
+    {
+      "id": "colors_10",
+      "type": "CLOZE",
+      "clozeText": "The sun is yellow.",
+      "clozeAnswer": "yellow",
+      "clozeHint": "цвет"
+    }
+  ]
+}
