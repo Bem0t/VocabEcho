@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -24,8 +23,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.ui.components.ClozePreview
+import com.myApp27.vocabecho.ui.components.SegmentedTypeSelector
 import com.myApp27.vocabecho.ui.components.descriptionRu
-import com.myApp27.vocabecho.ui.components.displayNameRu
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
@@ -88,7 +87,7 @@ fun AddCardToDeckScreen(
                         color = Color(0xFF0B4AA2)
                     )
 
-                    CardTypeSelector(
+                    SegmentedTypeSelector(
                         selectedType = state.selectedType,
                         onTypeSelected = { vm.onTypeChanged(it) }
                     )
@@ -307,48 +306,3 @@ private fun ActionButton(
     }
 }
 
-/**
- * Card type selector with segmented button style.
- */
-@Composable
-private fun CardTypeSelector(
-    selectedType: CardType,
-    onTypeSelected: (CardType) -> Unit
-) {
-    val types = CardType.selectableTypes()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFE8E4F0)),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        types.forEach { type ->
-            val isSelected = selectedType == type
-            val interactionSource = rememberPressInteraction()
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .pressScale(interactionSource)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) Color(0xFF3B87D9) else Color.Transparent)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { onTypeSelected(type) }
-                    )
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = type.displayNameRu(),
-                    color = if (isSelected) Color.White else Color(0xFF0B4AA2),
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-}

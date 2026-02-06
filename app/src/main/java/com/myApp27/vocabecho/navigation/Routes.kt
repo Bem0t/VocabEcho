@@ -12,6 +12,8 @@ object Routes {
     const val MANAGE_DECK_CARDS = "manage_deck_cards/{deckId}"
     const val EDIT_USER_CARD = "edit_user_card/{deckId}/{cardId}"
     const val ADD_CARD_TO_DECK = "add_card_to_deck/{deckId}"
+    const val BROWSE_DECKS = "browse_decks"
+    const val BROWSE_DECK_DETAIL = "browse_deck_detail/{deckId}"
 
     fun learn(deckId: String) = "learn/$deckId"
 
@@ -25,4 +27,6 @@ object Routes {
     fun editUserCard(deckId: String, cardId: String) = "edit_user_card/$deckId/$cardId"
 
     fun addCardToDeck(deckId: String) = "add_card_to_deck/$deckId"
+
+    fun browseDeckDetail(deckId: String) = "browse_deck_detail/$deckId"
 }

@@ -7,9 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,8 +31,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.domain.model.CardType
 import com.myApp27.vocabecho.ui.components.ClozePreview
+import com.myApp27.vocabecho.ui.components.SegmentedTypeSelector
 import com.myApp27.vocabecho.ui.components.descriptionRu
-import com.myApp27.vocabecho.ui.components.displayNameRu
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 import kotlinx.coroutines.Dispatchers
@@ -154,7 +152,7 @@ fun AddDeckScreen(
                     )
 
                     // Card type selector
-                    CardTypeSelector(
+                    SegmentedTypeSelector(
                         selectedType = state.selectedCardType,
                         onTypeSelected = { vm.onCardTypeChanged(it) }
                     )
@@ -412,12 +410,6 @@ private fun ActionButton(
     }
 }
 
-private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
-    clickable(
-        indication = null,
-        interactionSource = MutableInteractionSource()
-    ) { onClick() }
-
 @Composable
 private fun rememberBitmapFromUri(uriString: String?, context: android.content.Context): ImageBitmap? {
     var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -440,52 +432,6 @@ private fun rememberBitmapFromUri(uriString: String?, context: android.content.C
     }
 
     return bitmap
-}
-
-/**
- * Card type selector with segmented button style.
- */
-@Composable
-private fun CardTypeSelector(
-    selectedType: CardType,
-    onTypeSelected: (CardType) -> Unit
-) {
-    val types = CardType.selectableTypes()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFE8E4F0)),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        types.forEach { type ->
-            val isSelected = selectedType == type
-            val interactionSource = rememberPressInteraction()
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .pressScale(interactionSource)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) Color(0xFF3B87D9) else Color.Transparent)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { onTypeSelected(type) }
-                    )
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = type.displayNameRu(),
-                    color = if (isSelected) Color.White else Color(0xFF0B4AA2),
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
 }
 
 /**

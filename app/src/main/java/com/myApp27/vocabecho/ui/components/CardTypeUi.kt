@@ -2,11 +2,20 @@ package com.myApp27.vocabecho.ui.components
 
 import com.myApp27.vocabecho.domain.model.CardType
 
+/** Full display name for card type (used in descriptions). */
 fun CardType.displayNameRu(): String = when (this) {
     CardType.BASIC -> "Показать ответ"
     CardType.BASIC_TYPED -> "Ввести ответ"
     CardType.CLOZE -> "Пропуск в предложении"
-    CardType.BASIC_REVERSED -> "Показать ответ" // deprecated, mapped to BASIC
+    CardType.BASIC_REVERSED -> "Показать ответ"
+}
+
+/** Short label for segmented buttons (fits in narrow space). */
+fun CardType.shortLabelRu(): String = when (this) {
+    CardType.BASIC -> "Показать"
+    CardType.BASIC_TYPED -> "Ввести"
+    CardType.CLOZE -> "Пропуск"
+    CardType.BASIC_REVERSED -> "Показать"
 }
 
 fun CardType.descriptionRu(): String = when (this) {

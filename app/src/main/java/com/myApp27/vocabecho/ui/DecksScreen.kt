@@ -42,7 +42,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun DecksScreen(
     onDeckClick: (String) -> Unit,
-    onParentsClick: () -> Unit
+    onParentsClick: () -> Unit,
+    onBrowseClick: () -> Unit = {}
 ) {
     val vm: DecksViewModel = viewModel()
     val state by vm.state.collectAsState()
@@ -121,10 +122,19 @@ fun DecksScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
-            ParentsButton(
+            BottomButton(
+                text = "Обучение",
+                containerColor = Color(0xFF3B87D9),
+                onClick = onBrowseClick
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            BottomButton(
                 text = "Родителям",
+                containerColor = Color(0xFFFFA62B),
                 onClick = onParentsClick
             )
         }
@@ -180,7 +190,7 @@ private fun deckToTileUi(deck: Deck): DeckTileUi {
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFFE8637A),
-            imageRes = null,
+            imageRes = R.drawable.deck_colors,
             imageUri = null,
             isBuiltIn = true
         )
@@ -189,7 +199,7 @@ private fun deckToTileUi(deck: Deck): DeckTileUi {
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFF5DAFB0),
-            imageRes = null,
+            imageRes = R.drawable.deck_family,
             imageUri = null,
             isBuiltIn = true
         )
@@ -198,7 +208,7 @@ private fun deckToTileUi(deck: Deck): DeckTileUi {
             title = deck.title,
             countText = cardCountText,
             tileColor = Color(0xFFD4883A),
-            imageRes = null,
+            imageRes = R.drawable.deck_school,
             imageUri = null,
             isBuiltIn = true
         )
@@ -391,18 +401,18 @@ private fun rememberBitmapFromUri(uriString: String?, context: android.content.C
 }
 
 @Composable
-private fun ParentsButton(
+private fun BottomButton(
     text: String,
+    containerColor: Color,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(26.dp)
     val interactionSource = rememberPressInteraction()
 
-    // Белая рамка + тень + press scale
     Box(
         modifier = Modifier
             .fillMaxWidth(0.85f)
-            .height(60.dp)
+            .height(56.dp)
             .pressScale(interactionSource)
             .shadow(14.dp, shape)
             .background(Color.White, shape)
@@ -415,7 +425,7 @@ private fun ParentsButton(
     ) {
         Card(
             shape = shape,
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFA62B)),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             modifier = Modifier.fillMaxSize(),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {

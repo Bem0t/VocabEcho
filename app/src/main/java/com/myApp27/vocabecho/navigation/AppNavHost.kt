@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.myApp27.vocabecho.ui.BrowseDeckDetailScreen
+import com.myApp27.vocabecho.ui.BrowseDecksScreen
 import com.myApp27.vocabecho.ui.DecksScreen
 import com.myApp27.vocabecho.ui.FeedbackScreen
 import com.myApp27.vocabecho.ui.LearnScreen
@@ -33,6 +35,9 @@ fun AppNavHost() {
                 },
                 onParentsClick = {
                     navController.navigate(Routes.PARENT)
+                },
+                onBrowseClick = {
+                    navController.navigate(Routes.BROWSE_DECKS)
                 }
             )
         }
@@ -155,6 +160,29 @@ fun AppNavHost() {
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
 
             AddCardToDeckScreen(
+                deckId = deckId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 10) Обучение — список колод для просмотра
+        composable(Routes.BROWSE_DECKS) {
+            BrowseDecksScreen(
+                onDeckClick = { deckId ->
+                    navController.navigate(Routes.browseDeckDetail(deckId))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 11) Обучение — слово-перевод для конкретной колоды
+        composable(
+            route = Routes.BROWSE_DECK_DETAIL,
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
+
+            BrowseDeckDetailScreen(
                 deckId = deckId,
                 onBack = { navController.popBackStack() }
             )
