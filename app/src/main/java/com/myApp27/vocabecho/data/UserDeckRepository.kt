@@ -182,7 +182,15 @@ class UserDeckRepository(
                     }
                     // Case-insensitive, first occurrence only
                     val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
-                    Card(id = entity.id, front = questionText, back = clozeAnswer, type = CardType.CLOZE)
+                    Card(
+                        id = entity.id,
+                        front = questionText,
+                        back = clozeAnswer,
+                        type = CardType.CLOZE,
+                        clozeText = clozeText,
+                        clozeAnswer = clozeAnswer,
+                        clozeHint = entity.clozeHint
+                    )
                 }
             }
         }

@@ -22,6 +22,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
@@ -35,6 +37,7 @@ import com.myApp27.vocabecho.domain.answer.AnswerNormalizer
 import com.myApp27.vocabecho.domain.model.Deck
 import com.myApp27.vocabecho.domain.model.ParentSettings
 import com.myApp27.vocabecho.domain.time.TimeProvider
+import com.myApp27.vocabecho.ui.learn.LearnViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,6 +49,8 @@ fun FeedbackScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val activity = context as ComponentActivity
+    val learnVm: LearnViewModel = viewModel(activity)
 
     val db = remember { DatabaseProvider.get(context) }
     val assetRepo = remember { DeckRepository(context) }
@@ -212,14 +217,18 @@ fun FeedbackScreen(
                 enabled = true,
                 onClick = {
                     scope.launch {
-                        progressRepo.applyAnswerResult(
-                            deckId = deckId,
-                            cardId = cardId,
-                            todayEpochDay = TimeProvider.todayEpochDay(),
-                            isCorrect = isCorrect,
-                            settings = settings
-                        )
-                        onNext()
+                        try {
+                            progressRepo.applyAnswerResult(
+                                deckId = deckId,
+                                cardId = cardId,
+                                todayEpochDay = TimeProvider.todayEpochDay(),
+                                isCorrect = isCorrect,
+                                settings = settings
+                            )
+                        } finally {
+                            learnVm.advanceToNextCard()
+                            onNext()
+                        }
                     }
                 }
             )

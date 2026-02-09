@@ -17,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
 import com.myApp27.vocabecho.ui.components.animatedBorderColor
@@ -35,7 +37,8 @@ fun LearnScreen(
     onChecked: (cardId: String, answer: String) -> Unit,
     onBack: () -> Unit
 ) {
-    val vm: LearnViewModel = viewModel()
+    val activity = LocalContext.current as ComponentActivity
+    val vm: LearnViewModel = viewModel(activity)
     LaunchedEffect(deckId) { vm.load(deckId) }
 
     val state by vm.state.collectAsState()
@@ -125,7 +128,7 @@ fun LearnScreen(
 
                         // Показываем вопрос
                         Text(
-                            text = card.front,
+                            text = card.questionText,
                             color = Color(0xFF0B4AA2),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold
@@ -204,7 +207,7 @@ fun LearnScreen(
                     text = "Пропустить",
                     background = Color(0xFF3B87D9),
                     modifier = Modifier.weight(1f),
-                    onClick = { vm.moveNext() },
+                    onClick = { vm.advanceToNextCard() },
                     enabled = card != null
                 )
             }

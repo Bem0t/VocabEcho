@@ -45,6 +45,7 @@ fun AddDeckScreen(
     val vm: AddDeckViewModel = viewModel()
     val state by vm.state.collectAsState()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     // Image picker launcher
     val imagePicker = rememberLauncherForActivityResult(
@@ -70,7 +71,8 @@ fun AddDeckScreen(
                 .statusBarsPadding()
                 .padding(horizontal = 18.dp)
                 .padding(top = 18.dp, bottom = 16.dp)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header
@@ -92,7 +94,7 @@ fun AddDeckScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Deck title input
@@ -501,4 +503,3 @@ private fun DraftCardItem(
         }
     }
 }
-

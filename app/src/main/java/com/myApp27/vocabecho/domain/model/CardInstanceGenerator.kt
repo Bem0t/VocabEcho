@@ -51,25 +51,9 @@ object CardInstanceGenerator {
             )
 
             CardType.CLOZE -> {
-                // Generate cloze instance
-                val clozeText = entity.clozeText
-                val clozeAnswer = entity.clozeAnswer
-
-                if (clozeText.isNullOrBlank() || clozeAnswer.isNullOrBlank()) {
-                    // Fallback to BASIC if cloze data is missing
-                    return listOf(
-                        CardInstance(
-                            instanceId = "${noteId}#F",
-                            noteId = noteId,
-                            deckId = deckId,
-                            type = CardType.BASIC,
-                            questionText = entity.front,
-                            answerText = entity.back,
-                            expectsTyping = false,
-                            direction = null
-                        )
-                    )
-                }
+                // Generate cloze instance (do not use front/back)
+                val clozeText = entity.clozeText?.trim().orEmpty()
+                val clozeAnswer = entity.clozeAnswer?.trim().orEmpty()
 
                 // Generate question with placeholder (case-insensitive, first occurrence only)
                 val placeholder = if (!entity.clozeHint.isNullOrBlank()) {
@@ -77,7 +61,12 @@ object CardInstanceGenerator {
                 } else {
                     "[...]"
                 }
-                val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
+                val rawQuestion = if (clozeText.isNotBlank() && clozeAnswer.isNotBlank()) {
+                    replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
+                } else {
+                    clozeText
+                }
+                val questionText = rawQuestion.ifBlank { clozeText }.ifBlank { placeholder }
 
                 listOf(
                     CardInstance(
@@ -112,28 +101,30 @@ object CardInstanceGenerator {
         val cardType = card.type
 
         if (cardType == CardType.CLOZE) {
-            val clozeText = card.clozeText
-            val clozeAnswer = card.clozeAnswer
-
-            if (!clozeText.isNullOrBlank() && !clozeAnswer.isNullOrBlank()) {
-                val placeholder = if (!card.clozeHint.isNullOrBlank()) {
-                    "[${card.clozeHint}]"
-                } else {
-                    "[...]"
-                }
-                val questionText = replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
-
-                return CardInstance(
-                    instanceId = "${card.id}#C1",
-                    noteId = card.id,
-                    deckId = deckId,
-                    type = CardType.CLOZE,
-                    questionText = questionText,
-                    answerText = clozeAnswer,
-                    expectsTyping = true,
-                    direction = null
-                )
+            val clozeText = card.clozeText?.trim().orEmpty()
+            val clozeAnswer = card.clozeAnswer?.trim().orEmpty()
+            val placeholder = if (!card.clozeHint.isNullOrBlank()) {
+                "[${card.clozeHint}]"
+            } else {
+                "[...]"
             }
+            val rawQuestion = if (clozeText.isNotBlank() && clozeAnswer.isNotBlank()) {
+                replaceFirstIgnoreCase(clozeText, clozeAnswer, placeholder)
+            } else {
+                clozeText
+            }
+            val questionText = rawQuestion.ifBlank { clozeText }.ifBlank { placeholder }
+
+            return CardInstance(
+                instanceId = "${card.id}#C1",
+                noteId = card.id,
+                deckId = deckId,
+                type = CardType.CLOZE,
+                questionText = questionText,
+                answerText = clozeAnswer,
+                expectsTyping = true,
+                direction = null
+            )
         }
 
         return CardInstance(

@@ -41,6 +41,7 @@ fun AddCardToDeckScreen(
         )
     )
     val state by vm.state.collectAsState()
+    val scrollState = rememberScrollState()
 
     Box(Modifier.fillMaxSize()) {
         Image(
@@ -56,7 +57,8 @@ fun AddCardToDeckScreen(
                 .statusBarsPadding()
                 .padding(horizontal = 18.dp)
                 .padding(top = 18.dp, bottom = 16.dp)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HeaderPill(text = "Новая карточка")
@@ -77,7 +79,7 @@ fun AddCardToDeckScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Card type selector
@@ -305,4 +307,3 @@ private fun ActionButton(
         }
     }
 }
-
