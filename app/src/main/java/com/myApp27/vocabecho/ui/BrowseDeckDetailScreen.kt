@@ -1,18 +1,18 @@
-package com.myApp27.vocabecho.ui
+﻿package com.myApp27.vocabecho.ui
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -21,14 +21,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.myApp27.vocabecho.R
-import com.myApp27.vocabecho.data.CombinedDeckRepository
-import com.myApp27.vocabecho.data.DeckRepository
-import com.myApp27.vocabecho.data.UserDeckRepository
-import com.myApp27.vocabecho.data.db.DatabaseProvider
-import com.myApp27.vocabecho.domain.model.Card as DomainCard
-import com.myApp27.vocabecho.domain.model.Deck
+import com.myApp27.vocabecho.ui.browse.BrowseTrainViewModel
+import com.myApp27.vocabecho.ui.browse.BrowseTrainViewModelFactory
 import com.myApp27.vocabecho.ui.components.pressScale
 import com.myApp27.vocabecho.ui.components.rememberPressInteraction
 
@@ -37,17 +35,12 @@ fun BrowseDeckDetailScreen(
     deckId: String,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
-    val db = remember { DatabaseProvider.get(context) }
-    val assetRepo = remember { DeckRepository(context) }
-    val userRepo = remember { UserDeckRepository(db.userDeckDao(), db.userCardDao()) }
-    val deckRepo = remember { CombinedDeckRepository(assetRepo, userRepo) }
-
-    var deck by remember { mutableStateOf<Deck?>(null) }
-
-    LaunchedEffect(deckId) {
-        deck = deckRepo.loadDeck(deckId)
-    }
+    val app = LocalContext.current.applicationContext as Application
+    val vm: BrowseTrainViewModel = viewModel(
+        key = "browse_train_$deckId",
+        factory = BrowseTrainViewModelFactory(deckId, app)
+    )
+    val state by vm.state.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -56,6 +49,12 @@ fun BrowseDeckDetailScreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
+        val headerText = when {
+            state.deckTitle.isNotBlank() -> state.deckTitle
+            state.isLoading -> "Загрузка..."
+            else -> "Обучение"
+        }
 
         Column(
             modifier = Modifier
@@ -66,12 +65,10 @@ fun BrowseDeckDetailScreen(
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header
-            HeaderPill(text = deck?.title ?: "Загрузка...")
+            HeaderPill(text = headerText)
 
             Spacer(Modifier.height(18.dp))
 
-            // Cards list
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xEFFFFFFF)),
@@ -81,30 +78,93 @@ fun BrowseDeckDetailScreen(
                     .weight(1f)
                     .shadow(10.dp, RoundedCornerShape(18.dp))
             ) {
-                val currentDeck = deck
-                if (currentDeck == null) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Загрузка...")
-                    }
-                } else if (currentDeck.cards.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Нет карточек",
-                            color = Color(0xFF666666)
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 8.dp)
-                    ) {
-                        itemsIndexed(currentDeck.cards) { index, card ->
-                            WordRow(card = card)
-                            if (index < currentDeck.cards.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = Color(0x1A000000)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(18.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        state.isLoading -> {
+                            Text(
+                                text = "Загрузка...",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        state.errorMessage != null -> {
+                            Text(
+                                text = "Ошибка: ${state.errorMessage}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFB00020),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        state.cardsTotal == 0 -> {
+                            Text(
+                                text = "Нет карточек",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF666666)
+                            )
+                        }
+                        state.isFinished -> {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Готово!",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0B4AA2)
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = "Молодец!",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF444444)
+                                )
+                            }
+                        }
+                        else -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Слово",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF666666)
+                                )
+                                Text(
+                                    text = state.frontText,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF0B4AA2),
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Spacer(Modifier.height(14.dp))
+
+                                Text(
+                                    text = "Перевод",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF666666)
+                                )
+                                Text(
+                                    text = state.backText,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF444444),
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Spacer(Modifier.height(16.dp))
+
+                                Text(
+                                    text = "${state.currentIndex + 1} / ${state.cardsTotal}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF666666)
                                 )
                             }
                         }
@@ -114,50 +174,55 @@ fun BrowseDeckDetailScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Back button
-            BackButton(onClick = onBack)
+            when {
+                state.isFinished -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        TrainingButton(
+                            text = "Начать заново",
+                            background = Color(0xFF3B87D9),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.restart() }
+                        )
+                        TrainingButton(
+                            text = "Назад",
+                            background = Color(0xFFF05A3A),
+                            modifier = Modifier.weight(1f),
+                            onClick = onBack
+                        )
+                    }
+                }
+                state.isLoading || state.errorMessage != null || state.cardsTotal == 0 -> {
+                    TrainingButton(
+                        text = "Назад",
+                        background = Color(0xFF3B87D9),
+                        modifier = Modifier.fillMaxWidth(0.7f),
+                        onClick = onBack
+                    )
+                }
+                else -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        TrainingButton(
+                            text = "Не знаю",
+                            background = Color(0xFFF05A3A),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.onDontKnow() }
+                        )
+                        TrainingButton(
+                            text = "Знаю",
+                            background = Color(0xFF3B87D9),
+                            modifier = Modifier.weight(1f),
+                            onClick = { vm.onKnow() }
+                        )
+                    }
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun WordRow(card: DomainCard) {
-    // For CLOZE cards, show clozeText — clozeAnswer; for others, show front — back
-    val left: String
-    val right: String
-
-    if (card.type == com.myApp27.vocabecho.domain.model.CardType.CLOZE &&
-        !card.clozeText.isNullOrBlank() && !card.clozeAnswer.isNullOrBlank()
-    ) {
-        left = card.clozeAnswer!!
-        right = card.clozeText!!
-    } else {
-        left = card.front
-        right = card.back
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = left,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF0B4AA2),
-            modifier = Modifier.weight(1f)
-        )
-
-        Spacer(Modifier.width(12.dp))
-
-        Text(
-            text = right,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color(0xFF444444),
-            modifier = Modifier.weight(1f)
-        )
     }
 }
 
@@ -178,17 +243,22 @@ private fun HeaderPill(text: String) {
 }
 
 @Composable
-private fun BackButton(onClick: () -> Unit) {
-    val shape = RoundedCornerShape(26.dp)
+private fun TrainingButton(
+    text: String,
+    background: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val shapeOuter = RoundedCornerShape(20.dp)
+    val shapeInner = RoundedCornerShape(18.dp)
     val interactionSource = rememberPressInteraction()
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth(0.6f)
-            .height(52.dp)
+        modifier = modifier
+            .height(60.dp)
             .pressScale(interactionSource)
-            .shadow(10.dp, shape)
-            .background(Color.White, shape)
+            .shadow(12.dp, shapeOuter)
+            .background(Color.White, shapeOuter)
             .padding(4.dp)
             .clickable(
                 interactionSource = interactionSource,
@@ -197,15 +267,15 @@ private fun BackButton(onClick: () -> Unit) {
             )
     ) {
         Card(
-            shape = shape,
-            colors = CardDefaults.cardColors(containerColor = Color(0x66FFFFFF)),
+            shape = shapeInner,
+            colors = CardDefaults.cardColors(containerColor = background),
             modifier = Modifier.fillMaxSize(),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Назад",
-                    color = Color(0xFF0B4AA2),
+                    text = text,
+                    color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -213,3 +283,4 @@ private fun BackButton(onClick: () -> Unit) {
         }
     }
 }
+
