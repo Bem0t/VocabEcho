@@ -1,4 +1,4 @@
-package com.myApp27.vocabecho.ui.parent
+﻿package com.myApp27.vocabecho.ui.parent
 
 import android.app.Application
 import androidx.compose.foundation.Image
@@ -176,7 +176,7 @@ fun ManageDeckCardsScreen(
                 )
 
                 ActionPill(
-                    text = "Добавить карточку",
+                    text = "Добавить",
                     background = Color(0xFF3B87D9),
                     textColor = Color.White,
                     modifier = Modifier.weight(1f),
@@ -320,3 +320,4 @@ class ManageDeckCardsViewModelFactory(
         return ManageDeckCardsViewModel(app, deckId) as T
     }
 }
+

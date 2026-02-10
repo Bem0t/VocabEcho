@@ -1,6 +1,14 @@
-package com.myApp27.vocabecho.navigation
+﻿package com.myApp27.vocabecho.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,9 +26,36 @@ import com.myApp27.vocabecho.ui.parent.EditUserCardScreen
 import com.myApp27.vocabecho.ui.parent.ManageDeckCardsScreen
 import com.myApp27.vocabecho.ui.parent.ManageDecksScreen
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
+
+    val animDurationMs = 240
+    val enterForward: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+        slideIntoContainer(
+            AnimatedContentTransitionScope.SlideDirection.Left,
+            animationSpec = tween(animDurationMs)
+        ) + fadeIn(animationSpec = tween(animDurationMs))
+    }
+    val exitForward: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+        slideOutOfContainer(
+            AnimatedContentTransitionScope.SlideDirection.Left,
+            animationSpec = tween(animDurationMs)
+        ) + fadeOut(animationSpec = tween(animDurationMs))
+    }
+    val enterBack: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+        slideIntoContainer(
+            AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = tween(animDurationMs)
+        ) + fadeIn(animationSpec = tween(animDurationMs))
+    }
+    val exitBack: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+        slideOutOfContainer(
+            AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = tween(animDurationMs)
+        ) + fadeOut(animationSpec = tween(animDurationMs))
+    }
 
     NavHost(
         navController = navController,
@@ -28,7 +63,13 @@ fun AppNavHost() {
     ) {
 
         // 1) Главный экран: выбор колоды
-        composable(Routes.DECKS) {
+        composable(
+            route = Routes.DECKS,
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
+        ) {
             DecksScreen(
                 onDeckClick = { deckId ->
                     navController.navigate(Routes.learn(deckId))
@@ -45,7 +86,11 @@ fun AppNavHost() {
         // 2) Экран обучения: learn/{deckId}
         composable(
             route = Routes.LEARN,
-            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
 
@@ -65,7 +110,11 @@ fun AppNavHost() {
                 navArgument("deckId") { type = NavType.StringType },
                 navArgument("cardId") { type = NavType.StringType },
                 navArgument("answer") { type = NavType.StringType }
-            )
+            ),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
             val cardId = backStackEntry.arguments?.getString("cardId").orEmpty()
@@ -90,7 +139,13 @@ fun AppNavHost() {
         }
 
         // 4) Родительские настройки
-        composable(Routes.PARENT) {
+        composable(
+            route = Routes.PARENT,
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
+        ) {
             ParentSettingsScreen(
                 onBack = { navController.popBackStack() },
                 onAddDeckClick = { navController.navigate(Routes.ADD_DECK) },
@@ -99,14 +154,26 @@ fun AppNavHost() {
         }
 
         // 5) Добавление колоды
-        composable(Routes.ADD_DECK) {
+        composable(
+            route = Routes.ADD_DECK,
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
+        ) {
             AddDeckScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
         // 6) Управление колодами
-        composable(Routes.MANAGE_DECKS) {
+        composable(
+            route = Routes.MANAGE_DECKS,
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
+        ) {
             ManageDecksScreen(
                 onBack = { navController.popBackStack() },
                 onOpenDeck = { deckId ->
@@ -118,7 +185,11 @@ fun AppNavHost() {
         // 7) Карточки колоды
         composable(
             route = Routes.MANAGE_DECK_CARDS,
-            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
 
@@ -140,7 +211,11 @@ fun AppNavHost() {
             arguments = listOf(
                 navArgument("deckId") { type = NavType.StringType },
                 navArgument("cardId") { type = NavType.StringType }
-            )
+            ),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
             val cardId = backStackEntry.arguments?.getString("cardId").orEmpty()
@@ -155,7 +230,11 @@ fun AppNavHost() {
         // 9) Добавление карточки в существующую колоду
         composable(
             route = Routes.ADD_CARD_TO_DECK,
-            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
 
@@ -166,7 +245,13 @@ fun AppNavHost() {
         }
 
         // 10) Обучение — список колод для просмотра
-        composable(Routes.BROWSE_DECKS) {
+        composable(
+            route = Routes.BROWSE_DECKS,
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
+        ) {
             BrowseDecksScreen(
                 onDeckClick = { deckId ->
                     navController.navigate(Routes.browseDeckDetail(deckId))
@@ -178,7 +263,11 @@ fun AppNavHost() {
         // 11) Обучение — слово-перевод для конкретной колоды
         composable(
             route = Routes.BROWSE_DECK_DETAIL,
-            arguments = listOf(navArgument("deckId") { type = NavType.StringType })
+            arguments = listOf(navArgument("deckId") { type = NavType.StringType }),
+            enterTransition = enterForward,
+            exitTransition = exitForward,
+            popEnterTransition = enterBack,
+            popExitTransition = exitBack
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString("deckId").orEmpty()
 
