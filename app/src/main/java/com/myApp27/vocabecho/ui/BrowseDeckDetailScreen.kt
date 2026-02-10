@@ -55,6 +55,8 @@ fun BrowseDeckDetailScreen(
             state.isLoading -> "Загрузка..."
             else -> "Обучение"
         }
+        val total = state.cardsTotal.coerceAtLeast(1)
+        val current = (state.currentIndex + 1).coerceAtMost(total)
 
         Column(
             modifier = Modifier
@@ -65,7 +67,20 @@ fun BrowseDeckDetailScreen(
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HeaderPill(text = headerText)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BackCapsule(onClick = onBack)
+
+                Spacer(Modifier.weight(1f))
+
+                Capsule(text = "$current/$total")
+
+                Spacer(Modifier.weight(1f))
+
+                Capsule(text = headerText.ifBlank { "Тема" })
+            }
 
             Spacer(Modifier.height(18.dp))
 
@@ -195,12 +210,7 @@ fun BrowseDeckDetailScreen(
                     }
                 }
                 state.isLoading || state.errorMessage != null || state.cardsTotal == 0 -> {
-                    TrainingButton(
-                        text = "Назад",
-                        background = Color(0xFF3B87D9),
-                        modifier = Modifier.fillMaxWidth(0.7f),
-                        onClick = onBack
-                    )
+                    Spacer(Modifier.height(4.dp))
                 }
                 else -> {
                     Row(
@@ -227,17 +237,40 @@ fun BrowseDeckDetailScreen(
 }
 
 @Composable
-private fun HeaderPill(text: String) {
+private fun Capsule(text: String, modifier: Modifier = Modifier) {
     Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0x66FFFFFF))
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
+        modifier = modifier
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.titleLarge,
+            color = Color.White,
             fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFF0B4AA2)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun BackCapsule(onClick: () -> Unit) {
+    val interactionSource = rememberPressInteraction()
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x33000000)),
+        modifier = Modifier
+            .pressScale(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        Text(
+            text = "← Назад",
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
     }
 }
@@ -283,4 +316,3 @@ private fun TrainingButton(
         }
     }
 }
-
